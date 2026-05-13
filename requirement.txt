@@ -1,0 +1,11 @@
+Flask
+Flask-RESTful
+mysql-connector-python
+python-dotenv
+Flask-Cors
+PyJWT
+bcrypt
+gunicorn
+pytest
+tabulate
+colorama
