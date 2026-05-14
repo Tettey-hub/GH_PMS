@@ -312,6 +312,14 @@ def current_user():
     return jsonify({"user": g.current_user.to_dict()})
 
 
+def list_users():
+    users = UserService.get_all_users()
+    return jsonify({
+        "total": len(users),
+        "users": [user.to_dict() for user in users],
+    })
+
+
 def _json_payload() -> dict[str, Any]:
     payload = request.get_json(silent=True)
     return payload if isinstance(payload, dict) else {}

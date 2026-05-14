@@ -165,6 +165,22 @@ class UserService:
         return User.from_row(row) if row else None
 
     @staticmethod
+    def get_all_users() -> list[User]:
+        with db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(
+                """
+                SELECT *
+                FROM users
+                ORDER BY created_at DESC, id DESC
+                """
+            )
+            rows = cursor.fetchall()
+            cursor.close()
+
+        return [User.from_row(row) for row in rows]
+
+    @staticmethod
     def user_exists_with_role(role: str) -> bool:
         """Check if any user with the given role exists."""
         with db_connection() as connection:

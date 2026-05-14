@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from colorama import Fore, Style, init
+from tabulate import tabulate
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -130,44 +131,65 @@ def manage_users(client, access_token: str | None) -> None:
     while True:
         print(f"\n{Fore.CYAN}{Style.BRIGHT}Manage Users{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Add Admin")
-        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View Active User")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View All Staffs")
         print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
 
         choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
         if choice == "1":
             add_admin(client, access_token)
         elif choice == "2":
-            show_active_user(client, access_token)
+            show_all_staffs(client, access_token)
         elif choice == "3":
             return
         else:
             print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
 
 
-def show_active_user(client, access_token: str) -> None:
+def show_all_staffs(client, access_token: str) -> None:
     response = client.get(
-        "/api/v1/auth/me",
+        "/api/v1/auth/users",
         headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
     )
     body = response.get_json(silent=True) or {}
 
     if response.status_code != 200:
-        print(f"{Fore.RED}Failed to load active user:{Style.RESET_ALL} {body.get('error', 'Unknown error')}")
+        print(f"{Fore.RED}Failed to load staffs:{Style.RESET_ALL} {body.get('error', 'Unknown error')}")
+        missing_permissions = body.get("missing_permissions")
+        if isinstance(missing_permissions, list):
+            print(f"{Fore.YELLOW}Missing permissions:{Style.RESET_ALL} {', '.join(missing_permissions)}")
         return
 
-    user = body.get("user")
-    if not isinstance(user, dict):
-        print(f"{Fore.RED}Failed to load active user:{Style.RESET_ALL} invalid response.")
+    users = body.get("users")
+    if not isinstance(users, list):
+        print(f"{Fore.RED}Failed to load staffs:{Style.RESET_ALL} invalid response.")
         return
 
-    print(f"{Fore.GREEN}Name:{Style.RESET_ALL} {user.get('full_name')}")
-    print(f"{Fore.GREEN}Email:{Style.RESET_ALL} {user.get('email')}")
-    print(f"{Fore.GREEN}Officer ID:{Style.RESET_ALL} {user.get('officer_id')}")
-    print(f"{Fore.GREEN}Badge Number:{Style.RESET_ALL} {user.get('badge_number')}")
-    print(f"{Fore.GREEN}Rank:{Style.RESET_ALL} {user.get('rank')}")
-    print(f"{Fore.GREEN}Department:{Style.RESET_ALL} {user.get('department')}")
-    print(f"{Fore.GREEN}Role:{Style.RESET_ALL} {user.get('role')}")
-    print(f"{Fore.GREEN}Status:{Style.RESET_ALL} {user.get('status')}")
+    if not users:
+        print(f"{Fore.YELLOW}No staffs found.{Style.RESET_ALL}")
+        return
+
+    rows = []
+    for user in users:
+        if not isinstance(user, dict):
+            continue
+        rows.append([
+            user.get("id"),
+            user.get("staff_id") or "",
+            user.get("officer_id") or "",
+            user.get("full_name") or "",
+            user.get("email") or "",
+            user.get("department") or "",
+            user.get("position") or user.get("rank") or "",
+            user.get("role") or "",
+            user.get("status") or "",
+        ])
+
+    print(f"\n{Fore.GREEN}All Staffs ({body.get('total', len(rows))}){Style.RESET_ALL}")
+    print(tabulate(
+        rows,
+        headers=["ID", "Staff ID", "Officer ID", "Name", "Email", "Department", "Position", "Role", "Status"],
+        tablefmt="grid",
+    ))
 
 
 def add_admin(client, access_token: str | None) -> None:
