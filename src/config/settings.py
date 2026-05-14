@@ -69,6 +69,9 @@ def _validate_debug_mode(app_env: str, debug: bool) -> bool:
     if app_env == "production" and debug:
         raise RuntimeError("DEBUG mode cannot be enabled in production environment. Set DEBUG=false or APP_ENV=development.")
     return debug
+
+
+def _build_mysql_database_url() -> str:
     driver = _get_env("MYSQL_DRIVER", "mysql+mysqlconnector")
     user = quote(_get_env("MYSQL_USER", "root"), safe="")
     password = quote(_get_env("MYSQL_PASSWORD", ""), safe="")
@@ -106,7 +109,6 @@ class Settings:
     database_url: str = _get_env("DATABASE_URL", _build_mysql_database_url())
     db_pool_size: int = _get_positive_int("DB_POOL_SIZE", 20)
     database_connection_timeout: int = _get_positive_int("DATABASE_CONNECTION_TIMEOUT", 30)
-    database_get_timeout: int = _get_positive_int("DATABASE_GET_TIMEOUT", 10)
     startup_schema_validation_timeout_seconds: int = _get_positive_int("STARTUP_SCHEMA_VALIDATION_TIMEOUT_SECONDS", 5)
 
     secret_key: str = _validate_secret_key_entropy(_get_env("SECRET_KEY", required=True))

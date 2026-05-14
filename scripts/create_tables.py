@@ -18,19 +18,32 @@ AUTH_REFRESH_TOKENS_SCHEMA_FILE = SCHEMA_DIR / "auth_refresh_tokens.sql"
 RATE_LIMITS_SCHEMA_FILE = SCHEMA_DIR / "rate_limits.sql"
 AUTH_ACCOUNT_LOCKOUTS_SCHEMA_FILE = SCHEMA_DIR / "auth_account_lockouts.sql"
 AUDIT_LOGS_SCHEMA_FILE = SCHEMA_DIR / "audit_logs.sql"
+PERMISSIONS_SCHEMA_FILE = SCHEMA_DIR / "permissions.sql"
 
 
 TARGET_USER_COLUMNS = {
     "id",
     "officer_id",
     "first_name",
+    "middle_name",
     "last_name",
+    "gender",
+    "dob",
     "email",
     "password",
     "phone",
+    "national_id",
+    "address",
+    "profile_image",
+    "staff_id",
     "badge_number",
     "rank",
     "department",
+    "position",
+    "employment_date",
+    "branch",
+    "username",
+    "role_id",
     "role",
     "shift",
     "status",
@@ -38,6 +51,33 @@ TARGET_USER_COLUMNS = {
     "created_at",
     "updated_at",
 }
+
+USER_SCHEMA_ADDITIVE_COLUMNS = {
+    "middle_name": "ADD COLUMN middle_name VARCHAR(50) NULL AFTER first_name",
+    "gender": "ADD COLUMN gender VARCHAR(20) NULL AFTER last_name",
+    "dob": "ADD COLUMN dob DATE NULL AFTER gender",
+    "national_id": "ADD COLUMN national_id VARCHAR(50) NULL AFTER phone",
+    "address": "ADD COLUMN address TEXT NULL AFTER national_id",
+    "profile_image": "ADD COLUMN profile_image VARCHAR(255) NULL AFTER address",
+    "staff_id": "ADD COLUMN staff_id VARCHAR(50) NULL AFTER profile_image",
+    "position": "ADD COLUMN position VARCHAR(100) NULL AFTER department",
+    "employment_date": "ADD COLUMN employment_date DATE NULL AFTER position",
+    "branch": "ADD COLUMN branch VARCHAR(100) NULL AFTER employment_date",
+    "username": "ADD COLUMN username VARCHAR(100) NULL AFTER branch",
+    "role_id": "ADD COLUMN role_id INT NULL AFTER username",
+}
+
+USER_SCHEMA_INDEXES = {
+    "idx_users_national_id": "CREATE INDEX idx_users_national_id ON users (national_id)",
+    "idx_users_staff_id": "CREATE INDEX idx_users_staff_id ON users (staff_id)",
+    "idx_users_username": "CREATE INDEX idx_users_username ON users (username)",
+    "idx_users_role_id": "CREATE INDEX idx_users_role_id ON users (role_id)",
+}
+
+USER_ROLE_CHECK_SQL = (
+    "CONSTRAINT chk_users_role CHECK "
+    "(role IN ('admin', 'officer', 'supervisor', 'medical_officer', 'records_officer', 'visitor_officer'))"
+)
 
 TARGET_AUDIT_LOG_COLUMNS = {
     "id",
@@ -70,6 +110,7 @@ def create_tables() -> None:
     rate_limits_sql = _read_schema_sql(RATE_LIMITS_SCHEMA_FILE)
     auth_account_lockouts_sql = _read_schema_sql(AUTH_ACCOUNT_LOCKOUTS_SCHEMA_FILE)
     audit_logs_sql = _read_schema_sql(AUDIT_LOGS_SCHEMA_FILE)
+    permissions_sql = _read_schema_sql(PERMISSIONS_SCHEMA_FILE)
 
     with db_connection() as connection:
         cursor = connection.cursor()
@@ -78,6 +119,7 @@ def create_tables() -> None:
         cursor.execute(rate_limits_sql)
         cursor.execute(auth_account_lockouts_sql)
         _ensure_audit_logs_table(cursor, audit_logs_sql)
+        _execute_schema_statements(cursor, permissions_sql)
         connection.commit()
         cursor.close()
 
@@ -90,6 +132,13 @@ def _read_schema_sql(schema_file: Path) -> str:
     return schema_file.read_text(encoding="utf-8")
 
 
+def _execute_schema_statements(cursor, schema_sql: str) -> None:
+    for statement in schema_sql.split(";"):
+        statement = statement.strip()
+        if statement:
+            cursor.execute(statement)
+
+
 def _ensure_users_table(connection, cursor, users_table_sql: str) -> None:
     existing_columns = _get_table_columns(cursor, "users")
     if not existing_columns:
@@ -97,6 +146,8 @@ def _ensure_users_table(connection, cursor, users_table_sql: str) -> None:
         return
 
     if TARGET_USER_COLUMNS.issubset(existing_columns):
+        _ensure_user_indexes(cursor)
+        _ensure_user_role_constraint(cursor)
         return
 
     if LEGACY_USER_COLUMNS.issubset(existing_columns):
@@ -104,6 +155,15 @@ def _ensure_users_table(connection, cursor, users_table_sql: str) -> None:
         return
 
     missing_columns = sorted(TARGET_USER_COLUMNS - existing_columns)
+    if set(missing_columns).issubset(USER_SCHEMA_ADDITIVE_COLUMNS):
+        for column in USER_SCHEMA_ADDITIVE_COLUMNS:
+            if column not in missing_columns:
+                continue
+            cursor.execute(f"ALTER TABLE users {USER_SCHEMA_ADDITIVE_COLUMNS[column]}")
+        _ensure_user_indexes(cursor)
+        _ensure_user_role_constraint(cursor)
+        return
+
     raise RuntimeError(
         "Existing users table does not match the required prison-officer schema. "
         f"Missing columns: {', '.join(missing_columns)}"
@@ -120,6 +180,47 @@ def _get_table_columns(cursor, table_name: str) -> set[str]:
         (table_name,),
     )
     return {row[0] for row in cursor.fetchall()}
+
+
+def _ensure_user_indexes(cursor) -> None:
+    cursor.execute(
+        """
+        SELECT INDEX_NAME
+        FROM information_schema.statistics
+        WHERE table_schema = DATABASE() AND table_name = 'users'
+        """
+    )
+    existing_indexes = {row[0] for row in cursor.fetchall()}
+    for index_name, index_sql in USER_SCHEMA_INDEXES.items():
+        if index_name not in existing_indexes:
+            cursor.execute(index_sql)
+
+
+def _ensure_user_role_constraint(cursor) -> None:
+    cursor.execute(
+        """
+        SELECT CHECK_CLAUSE
+        FROM information_schema.check_constraints
+        WHERE CONSTRAINT_SCHEMA = DATABASE()
+          AND CONSTRAINT_NAME = 'chk_users_role'
+        """
+    )
+    row = cursor.fetchone()
+    check_clause = row[0].lower() if row else ""
+    expected_roles = {
+        "admin",
+        "officer",
+        "supervisor",
+        "medical_officer",
+        "records_officer",
+        "visitor_officer",
+    }
+    if expected_roles.issubset({role for role in expected_roles if role in check_clause}):
+        return
+
+    if row:
+        cursor.execute("ALTER TABLE users DROP CHECK chk_users_role")
+    cursor.execute(f"ALTER TABLE users ADD {USER_ROLE_CHECK_SQL}")
 
 
 def _ensure_audit_logs_table(cursor, audit_logs_sql: str) -> None:
@@ -154,13 +255,25 @@ def _migrate_legacy_users_table(connection, cursor, users_table_sql: str) -> Non
             id,
             officer_id,
             first_name,
+            middle_name,
             last_name,
+            gender,
+            dob,
             email,
             password,
             phone,
+            national_id,
+            address,
+            profile_image,
+            staff_id,
             badge_number,
             `rank`,
             department,
+            position,
+            employment_date,
+            branch,
+            username,
+            role_id,
             role,
             shift,
             status,
@@ -172,17 +285,29 @@ def _migrate_legacy_users_table(connection, cursor, users_table_sql: str) -> Non
             id,
             CONCAT('OFF', LPAD(id, 3, '0')) AS officer_id,
             SUBSTRING_INDEX(TRIM(COALESCE(username, full_name, 'Officer')), ' ', 1) AS first_name,
+            NULL AS middle_name,
             CASE
                 WHEN LOCATE(' ', TRIM(COALESCE(username, full_name, 'Officer'))) > 0
                     THEN SUBSTRING(TRIM(COALESCE(username, full_name, 'Officer')), LOCATE(' ', TRIM(COALESCE(username, full_name, 'Officer'))) + 1)
                 ELSE 'Officer'
             END AS last_name,
+            NULL AS gender,
+            NULL AS dob,
             email,
             password_hash AS password,
             NULL AS phone,
+            NULL AS national_id,
+            NULL AS address,
+            NULL AS profile_image,
+            NULL AS staff_id,
             CONCAT('BADGE', LPAD(id, 3, '0')) AS badge_number,
             COALESCE(NULLIF(role, ''), 'Officer') AS `rank`,
             'Administration' AS department,
+            NULL AS position,
+            NULL AS employment_date,
+            NULL AS branch,
+            username,
+            NULL AS role_id,
             CASE
                 WHEN LOWER(role) IN ('admin', 'officer', 'supervisor') THEN LOWER(role)
                 ELSE 'officer'

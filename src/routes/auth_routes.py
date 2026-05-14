@@ -10,7 +10,7 @@ from src.middlewares.permission_middleware import permission_required
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 auth_bp.post("/bootstrap")(bootstrap_admin)
-auth_bp.post("/register")(permission_required("users_create")(roles_required("admin", "supervisor")(register_user)))
+auth_bp.post("/register")(roles_required("admin", "supervisor")(permission_required("users_create")(register_user)))
 auth_bp.post("/login")(login)
 auth_bp.post("/logout")(token_required(logout))
 auth_bp.post("/refresh")(refresh_token)

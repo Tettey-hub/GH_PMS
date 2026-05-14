@@ -25,6 +25,18 @@ class CreateUserData:
     shift: str
     status: str
     date_joined: date
+    middle_name: str | None = None
+    gender: str | None = None
+    dob: date | None = None
+    national_id: str | None = None
+    address: str | None = None
+    profile_image: str | None = None
+    staff_id: str | None = None
+    position: str | None = None
+    employment_date: date | None = None
+    branch: str | None = None
+    username: str | None = None
+    role_id: int | None = None
 
 
 class UserService:
@@ -41,13 +53,25 @@ class UserService:
                     INSERT INTO users (
                         officer_id,
                         first_name,
+                        middle_name,
                         last_name,
+                        gender,
+                        dob,
                         email,
                         password,
                         phone,
+                        national_id,
+                        address,
+                        profile_image,
+                        staff_id,
                         badge_number,
                         `rank`,
                         department,
+                        position,
+                        employment_date,
+                        branch,
+                        username,
+                        role_id,
                         role,
                         shift,
                         status,
@@ -55,13 +79,25 @@ class UserService:
                     ) VALUES (
                         %(officer_id)s,
                         %(first_name)s,
+                        %(middle_name)s,
                         %(last_name)s,
+                        %(gender)s,
+                        %(dob)s,
                         %(email)s,
                         %(password)s,
                         %(phone)s,
+                        %(national_id)s,
+                        %(address)s,
+                        %(profile_image)s,
+                        %(staff_id)s,
                         %(badge_number)s,
                         %(rank)s,
                         %(department)s,
+                        %(position)s,
+                        %(employment_date)s,
+                        %(branch)s,
+                        %(username)s,
+                        %(role_id)s,
                         %(role)s,
                         %(shift)s,
                         %(status)s,
@@ -71,13 +107,25 @@ class UserService:
                     {
                         "officer_id": data.officer_id,
                         "first_name": data.first_name,
+                        "middle_name": data.middle_name,
                         "last_name": data.last_name,
+                        "gender": data.gender,
+                        "dob": data.dob,
                         "email": data.email.lower(),
                         "password": password_hash,
                         "phone": data.phone,
+                        "national_id": data.national_id,
+                        "address": data.address,
+                        "profile_image": data.profile_image,
+                        "staff_id": data.staff_id,
                         "badge_number": data.badge_number,
                         "rank": data.rank,
                         "department": data.department,
+                        "position": data.position,
+                        "employment_date": data.employment_date,
+                        "branch": data.branch,
+                        "username": data.username.lower() if data.username else None,
+                        "role_id": data.role_id,
                         "role": data.role,
                         "shift": data.shift,
                         "status": data.status,

@@ -38,7 +38,7 @@ def main() -> int:
             else:
                 print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
         elif choice == "1":
-            add_admin(client, access_token)
+            manage_users(client, access_token)
         elif choice == "2":
             access_token, refresh_token, current_user = logout(client, access_token, refresh_token, current_user)
         elif choice == "3":
@@ -57,7 +57,7 @@ def print_logged_out_menu() -> None:
 def print_logged_in_menu(current_user: dict) -> None:
     active_name = current_user.get("full_name") or current_user.get("email") or "Active User"
     print(f"\n{Fore.CYAN}{Style.BRIGHT}{active_name}{Style.RESET_ALL}")
-    print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Add Admin")
+    print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Manage Users")
     print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Log Out")
     print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Exit")
 
@@ -78,7 +78,7 @@ def login(client) -> tuple[str | None, str | None, dict | None]:
         return None, None, None
 
     access_token = body.get("access_token")
-    refresh_token = body.get("refresh_token")
+    refresh_token = body.get("refresh_token") or extract_refresh_token(response)
     user = body.get("user")
     if not isinstance(access_token, str) or not isinstance(refresh_token, str) or not isinstance(user, dict):
         print(f"{Fore.RED}Login failed:{Style.RESET_ALL} invalid auth response.")
@@ -115,26 +115,124 @@ def logout(
     return None, None, None
 
 
+def extract_refresh_token(response) -> str | None:
+    cookie_header = response.headers.get("Set-Cookie", "")
+    if not cookie_header.startswith("refresh_token="):
+        return None
+    return cookie_header.split(";", 1)[0].split("=", 1)[1]
+
+
+def manage_users(client, access_token: str | None) -> None:
+    if not access_token:
+        print(f"{Fore.YELLOW}Login before managing users.{Style.RESET_ALL}")
+        return
+
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Manage Users{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Add Admin")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View Active User")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            add_admin(client, access_token)
+        elif choice == "2":
+            show_active_user(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def show_active_user(client, access_token: str) -> None:
+    response = client.get(
+        "/api/v1/auth/me",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+
+    if response.status_code != 200:
+        print(f"{Fore.RED}Failed to load active user:{Style.RESET_ALL} {body.get('error', 'Unknown error')}")
+        return
+
+    user = body.get("user")
+    if not isinstance(user, dict):
+        print(f"{Fore.RED}Failed to load active user:{Style.RESET_ALL} invalid response.")
+        return
+
+    print(f"{Fore.GREEN}Name:{Style.RESET_ALL} {user.get('full_name')}")
+    print(f"{Fore.GREEN}Email:{Style.RESET_ALL} {user.get('email')}")
+    print(f"{Fore.GREEN}Officer ID:{Style.RESET_ALL} {user.get('officer_id')}")
+    print(f"{Fore.GREEN}Badge Number:{Style.RESET_ALL} {user.get('badge_number')}")
+    print(f"{Fore.GREEN}Rank:{Style.RESET_ALL} {user.get('rank')}")
+    print(f"{Fore.GREEN}Department:{Style.RESET_ALL} {user.get('department')}")
+    print(f"{Fore.GREEN}Role:{Style.RESET_ALL} {user.get('role')}")
+    print(f"{Fore.GREEN}Status:{Style.RESET_ALL} {user.get('status')}")
+
+
 def add_admin(client, access_token: str | None) -> None:
     if not access_token:
         print(f"{Fore.YELLOW}Login as an admin or supervisor before adding an admin.{Style.RESET_ALL}")
         return
 
     print(f"\n{Fore.CYAN}{Style.BRIGHT}Add Admin{Style.RESET_ALL}")
+    print(f"{Fore.WHITE}Create system users such as prison officers, medical officers, records officers, and visitor officers.{Style.RESET_ALL}")
+    print_section("Personal Information")
+    first_name = prompt_required("First name")
+    middle_name = prompt_optional("Middle name")
+    last_name = prompt_required("Last name")
+    gender = prompt_choice("Gender", ["male", "female"])
+    dob = prompt_required("Date of birth (YYYY-MM-DD)")
+    phone = prompt_optional("Phone number")
+    email = prompt_required("Email address")
+    national_id = prompt_required("National ID number")
+    address = prompt_optional("Residential address")
+    profile_image = prompt_optional("Profile image path")
+
+    print_section("Employment Information")
+    staff_id = prompt_required("Staff ID")
+    officer_id = prompt_required("Officer ID (OFF001 format)")
+    badge_number = prompt_required("Badge number")
+    department = prompt_choice("Department", ["Prison", "Administration", "Medical", "Records", "Visitors", "Security"])
+    position = prompt_required("Position")
+    employment_date = prompt_required("Employment date (YYYY-MM-DD)")
+    branch = prompt_required("Branch / Facility")
+    shift = prompt_choice("Shift", ["morning", "afternoon", "night"])
+
+    print_section("Account Information")
+    username = prompt_required("Username")
+    password = prompt_password()
+    role = prompt_choice(
+        "Role",
+        ["admin", "officer", "supervisor", "medical_officer", "records_officer", "visitor_officer"],
+    )
+    status = prompt_choice("Account status", ["active", "inactive"])
+
     payload = {
-        "officer_id": input(f"{Fore.CYAN}Officer ID:{Style.RESET_ALL} ").strip(),
-        "first_name": input(f"{Fore.CYAN}First name:{Style.RESET_ALL} ").strip(),
-        "last_name": input(f"{Fore.CYAN}Last name:{Style.RESET_ALL} ").strip(),
-        "email": input(f"{Fore.CYAN}Email:{Style.RESET_ALL} ").strip(),
-        "password": getpass.getpass(f"{Fore.CYAN}Password:{Style.RESET_ALL} "),
-        "phone": input(f"{Fore.CYAN}Phone:{Style.RESET_ALL} ").strip(),
-        "badge_number": input(f"{Fore.CYAN}Badge number:{Style.RESET_ALL} ").strip(),
-        "rank": input(f"{Fore.CYAN}Rank:{Style.RESET_ALL} ").strip(),
-        "department": input(f"{Fore.CYAN}Department:{Style.RESET_ALL} ").strip(),
-        "shift": input(f"{Fore.CYAN}Shift (morning/afternoon/night):{Style.RESET_ALL} ").strip(),
-        "date_joined": input(f"{Fore.CYAN}Date joined (YYYY-MM-DD):{Style.RESET_ALL} ").strip(),
-        "role": "admin",
-        "status": "active",
+        "officer_id": officer_id,
+        "first_name": first_name,
+        "middle_name": middle_name,
+        "last_name": last_name,
+        "gender": gender,
+        "dob": dob,
+        "email": email,
+        "password": password,
+        "phone": phone,
+        "national_id": national_id,
+        "address": address,
+        "profile_image": profile_image,
+        "staff_id": staff_id,
+        "badge_number": badge_number,
+        "rank": position,
+        "department": department,
+        "position": position,
+        "employment_date": employment_date,
+        "branch": branch,
+        "username": username,
+        "role": role,
+        "status": status,
+        "shift": shift,
+        "date_joined": employment_date,
     }
 
     response = client.post(
@@ -153,7 +251,53 @@ def add_admin(client, access_token: str | None) -> None:
         return
 
     user = body.get("user", {})
-    print(f"{Fore.GREEN}Admin created:{Style.RESET_ALL} {user.get('full_name')} ({user.get('officer_id')})")
+    print(f"{Fore.GREEN}User created:{Style.RESET_ALL} {user.get('full_name')} ({user.get('officer_id')})")
+
+
+def print_section(title: str) -> None:
+    print(f"\n{Fore.BLUE}{Style.BRIGHT}{title}{Style.RESET_ALL}")
+
+
+def prompt_required(label: str) -> str:
+    while True:
+        value = input(f"{Fore.CYAN}{label}:{Style.RESET_ALL} ").strip()
+        if value:
+            return value
+        print(f"{Fore.RED}{label} is required.{Style.RESET_ALL}")
+
+
+def prompt_optional(label: str) -> str | None:
+    value = input(f"{Fore.CYAN}{label} (optional):{Style.RESET_ALL} ").strip()
+    return value or None
+
+
+def prompt_choice(label: str, options: list[str]) -> str:
+    normalized_options = {option.lower(): option for option in options}
+    while True:
+        print(f"{Fore.CYAN}{label}:{Style.RESET_ALL}")
+        for index, option in enumerate(options, start=1):
+            print(f"  {Fore.YELLOW}{index}.{Style.RESET_ALL} {option}")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip().lower()
+        if choice.isdigit():
+            selected_index = int(choice) - 1
+            if 0 <= selected_index < len(options):
+                return options[selected_index].lower()
+        if choice in normalized_options:
+            return normalized_options[choice].lower()
+        print(f"{Fore.RED}Invalid selection.{Style.RESET_ALL}")
+
+
+def prompt_password() -> str:
+    while True:
+        password = getpass.getpass(f"{Fore.CYAN}Password:{Style.RESET_ALL} ")
+        confirm_password = getpass.getpass(f"{Fore.CYAN}Confirm password:{Style.RESET_ALL} ")
+        if password != confirm_password:
+            print(f"{Fore.RED}Passwords do not match.{Style.RESET_ALL}")
+            continue
+        if not password:
+            print(f"{Fore.RED}Password is required.{Style.RESET_ALL}")
+            continue
+        return password
 
 
 if __name__ == "__main__":

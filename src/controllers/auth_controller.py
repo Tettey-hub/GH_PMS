@@ -117,13 +117,25 @@ def register_user():
             CreateUserData(
                 officer_id=payload["officer_id"].strip().upper(),
                 first_name=payload["first_name"].strip(),
+                middle_name=_optional_string(payload.get("middle_name")),
                 last_name=payload["last_name"].strip(),
+                gender=_optional_string(payload.get("gender")),
+                dob=_optional_date(payload.get("dob")),
                 email=payload["email"].strip().lower(),
                 password=payload["password"],
                 phone=_optional_string(payload.get("phone")),
+                national_id=_optional_string(payload.get("national_id")),
+                address=_optional_string(payload.get("address")),
+                profile_image=_optional_string(payload.get("profile_image")),
+                staff_id=_optional_string(payload.get("staff_id")),
                 badge_number=payload["badge_number"].strip().upper(),
                 rank=payload["rank"].strip(),
                 department=payload["department"].strip(),
+                position=_optional_string(payload.get("position")),
+                employment_date=_optional_date(payload.get("employment_date")),
+                branch=_optional_string(payload.get("branch")),
+                username=_optional_string(payload.get("username")),
+                role_id=_optional_int(payload.get("role_id")),
                 role=payload.get("role", "officer").strip().lower(),
                 shift=payload["shift"].strip().lower(),
                 status=payload.get("status", "active").strip().lower(),
@@ -200,19 +212,19 @@ def login():
         user_agent=_user_agent(),
         metadata={"officer_id": user.officer_id, "role": user.role},
     )
-    
+    tokens = AuthService.issue_tokens(user)
+
     response = jsonify({
         "message": "Login successful",
-        "token_type": "Bearer",
-        "access_token": AuthService.issue_tokens(user)["access_token"],
+        "token_type": tokens["token_type"],
+        "access_token": tokens["access_token"],
         "expires_in_minutes": settings.access_token_expire_minutes,
         "user": user.to_dict(),
     })
-    
-    refresh_token_response = AuthService.issue_tokens(user)
+
     response.set_cookie(
         "refresh_token",
-        refresh_token_response["refresh_token"],
+        tokens["refresh_token"],
         max_age=settings.refresh_token_expire_days * 86400,
         httponly=True,
         secure=settings.app_env == "production",
@@ -318,6 +330,16 @@ def _validate_register_payload(payload: dict[str, Any]) -> dict[str, str]:
     _require_text(errors, payload, "shift", max_length=20)
     _require_text(errors, payload, "date_joined")
 
+    _optional_text(errors, payload, "middle_name", max_length=50)
+    _optional_text(errors, payload, "gender", max_length=20)
+    _optional_text(errors, payload, "national_id", max_length=50)
+    _optional_text(errors, payload, "address")
+    _optional_text(errors, payload, "profile_image", max_length=255)
+    _optional_text(errors, payload, "staff_id", max_length=50)
+    _optional_text(errors, payload, "position", max_length=100)
+    _optional_text(errors, payload, "branch", max_length=100)
+    _optional_text(errors, payload, "username", max_length=100)
+
     email = payload.get("email")
     if isinstance(email, str) and not EMAIL_PATTERN.match(email.strip()):
         errors["email"] = "Enter a valid email address"
@@ -355,6 +377,10 @@ def _validate_register_payload(payload: dict[str, Any]) -> dict[str, str]:
     except ValueError:
         errors["date_joined"] = "Date joined must use YYYY-MM-DD"
 
+    _validate_optional_date(errors, payload, "dob")
+    _validate_optional_date(errors, payload, "employment_date")
+    _validate_optional_int(errors, payload, "role_id")
+
     return errors
 
 
@@ -388,11 +414,65 @@ def _require_text(
         errors[field] = f"Must be at most {max_length} characters"
 
 
+def _optional_text(
+    errors: dict[str, str],
+    payload: dict[str, Any],
+    field: str,
+    *,
+    max_length: int | None = None,
+) -> None:
+    value = payload.get(field)
+    if value in {None, ""}:
+        return
+    if not isinstance(value, str):
+        errors[field] = "Must be text"
+        return
+    if max_length is not None and len(value.strip()) > max_length:
+        errors[field] = f"Must be at most {max_length} characters"
+
+
+def _validate_optional_date(errors: dict[str, str], payload: dict[str, Any], field: str) -> None:
+    value = payload.get(field)
+    if value in {None, ""}:
+        return
+    if not isinstance(value, str):
+        errors[field] = "Must use YYYY-MM-DD"
+        return
+    try:
+        date.fromisoformat(value.strip())
+    except ValueError:
+        errors[field] = "Must use YYYY-MM-DD"
+
+
+def _validate_optional_int(errors: dict[str, str], payload: dict[str, Any], field: str) -> None:
+    value = payload.get(field)
+    if value in {None, ""}:
+        return
+    try:
+        int(value)
+    except (TypeError, ValueError):
+        errors[field] = "Must be an integer"
+
+
 def _optional_string(value: Any) -> str | None:
     if value is None:
         return None
     value = str(value).strip()
     return value or None
+
+
+def _optional_date(value: Any) -> date | None:
+    value = _optional_string(value)
+    if value is None:
+        return None
+    return date.fromisoformat(value)
+
+
+def _optional_int(value: Any) -> int | None:
+    value = _optional_string(value)
+    if value is None:
+        return None
+    return int(value)
 
 
 def _validate_password_strength(password: str) -> list[str]:

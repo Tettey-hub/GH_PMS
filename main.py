@@ -15,7 +15,6 @@ from src.middlewares.rate_limit_middleware import register_rate_limit_middleware
 from src.middlewares.request_validation_middleware import register_request_validation_middleware
 from src.middlewares.security_headers_middleware import register_security_headers_middleware
 from src.routes.auth_routes import auth_bp
-from src.routes.test_routes import test_bp
 
 
 def create_app() -> Flask:
@@ -47,7 +46,6 @@ def create_app() -> Flask:
     register_rate_limit_middleware(app)
     
     app.register_blueprint(auth_bp, url_prefix=f"{settings.api_prefix}/auth")
-    app.register_blueprint(test_bp, url_prefix=f"{settings.api_prefix}/test")
 
     @app.get("/")
     def root():
