@@ -24,6 +24,8 @@ class DatabaseConfig:
     password: str
     charset: str = "utf8mb4"
     autocommit: bool = False
+    connection_timeout: int = 30
+    get_timeout: int = 10
 
     @classmethod
     def from_database_url(cls, database_url: str) -> "DatabaseConfig":
@@ -41,6 +43,8 @@ class DatabaseConfig:
             database=database,
             user=unquote(parsed.username),
             password=unquote(parsed.password or ""),
+            connection_timeout=settings.database_connection_timeout,
+            get_timeout=settings.database_get_timeout,
         )
 
     def as_mysql_connector_kwargs(self) -> dict[str, object]:
@@ -52,6 +56,8 @@ class DatabaseConfig:
             "password": self.password,
             "charset": self.charset,
             "autocommit": self.autocommit,
+            "connection_timeout": self.connection_timeout,
+            "get_warnings": False,
         }
 
 
@@ -70,6 +76,7 @@ def get_connection_pool() -> MySQLConnectionPool:
                     pool_name="pms_mysql_pool",
                     pool_size=settings.db_pool_size,
                     pool_reset_session=True,
+                    get_timeout=database_config.get_timeout,
                     **database_config.as_mysql_connector_kwargs(),
                 )
 

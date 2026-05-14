@@ -8,6 +8,14 @@ from mysql.connector import Error as MySQLError
 
 from src.config.database_config import db_connection
 from src.config.settings import settings
+from src.middlewares.error_handler import register_error_handlers
+from src.middlewares.host_validation_middleware import register_host_validation_middleware
+from src.middlewares.maintenance_middleware import register_maintenance_middleware
+from src.middlewares.rate_limit_middleware import register_rate_limit_middleware
+from src.middlewares.request_validation_middleware import register_request_validation_middleware
+from src.middlewares.security_headers_middleware import register_security_headers_middleware
+from src.routes.auth_routes import auth_bp
+from src.routes.test_routes import test_bp
 
 
 def create_app() -> Flask:
@@ -18,15 +26,28 @@ def create_app() -> Flask:
         JSON_SORT_KEYS=False,
         TRUSTED_HOSTS=settings.trusted_hosts or None,
         DOCS_ENABLED=settings.docs_enabled,
+        MAX_CONTENT_LENGTH=settings.max_request_body_size_mb * 1024 * 1024,
     )
 
     CORS(
         app,
-        origins=settings.allowed_origins or [],
+        origins=settings.allowed_origins or ["http://localhost:3000"],
         methods=settings.allowed_methods,
-        allow_headers=settings.allowed_headers,
+        allow_headers=["Content-Type", "Authorization"],
         supports_credentials=settings.allow_credentials,
+        max_age=3600,
     )
+    
+     # Register middleware in order
+    register_error_handlers(app)
+    register_maintenance_middleware(app)
+    register_request_validation_middleware(app)
+    register_security_headers_middleware(app)
+    register_host_validation_middleware(app)
+    register_rate_limit_middleware(app)
+    
+    app.register_blueprint(auth_bp, url_prefix=f"{settings.api_prefix}/auth")
+    app.register_blueprint(test_bp, url_prefix=f"{settings.api_prefix}/test")
 
     @app.get("/")
     def root():

@@ -1,0 +1,56 @@
+{
+  "name": "ghana-prison-management-system",
+  "version": "1.0.0",
+  "description": "Ghana Prison Service Database Management System - Backend API",
+  "main": "main.py",
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "Ghana Prison Service",
+    "url": "https://www.ghanaprisons.gov.gh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tettey-hub/GH_PMS.git"
+  },
+  "keywords": [
+    "prison",
+    "management",
+    "system",
+    "ghana",
+    "database",
+    "api",
+    "flask",
+    "mysql"
+  ],
+  "scripts": {
+    "dev": "python main.py",
+    "start": "python main.py",
+    "test": "pytest",
+    "test:cov": "pytest --cov=src",
+    "lint": "flake8 src",
+    "format": "black src",
+    "sort": "isort src",
+    "db:test": "python scripts/test_db.py",
+    "setup": "python setup.py"
+  },
+  "engines": {
+    "python": "3.12.8",
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {},
+  "optionalDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "config": {
+    "python_version": "3.12.8",
+    "database": "mysql",
+    "framework": "flask"
+  }
+}
