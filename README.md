@@ -62,3 +62,42 @@ Allowed values:
 - `role`: `admin`, `officer`, `supervisor`, `medical_officer`, `records_officer`, `visitor_officer`
 - `status`: `active`, `inactive`
 - `shift`: `morning`, `afternoon`, `night`
+
+## Login
+
+Endpoint: `POST /api/v1/auth/login` (Accepts `email` or `username` for authentication)
+
+### Login with Email
+
+```json
+{
+  "email": "user@example.com",
+  "password": "StrongPassword123!"
+}
+```
+
+Or:
+
+```json
+{
+  "username": "username",
+  "password": "StrongPassword123!"
+}
+```
+
+### Login with Identifier (Email or Username)
+
+```json
+{
+  "identifier": "user@example.com",
+  "password": "StrongPassword123!"
+}
+```
+
+```json
+{
+  "identifier": "username",
+  "password": "StrongPassword123!"
+}
+```
+```

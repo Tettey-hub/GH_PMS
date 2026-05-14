@@ -169,22 +169,22 @@ def login():
     if errors:
         return _error("Validation failed", 400, errors)
 
-    email = payload["email"].strip().lower()
-    lockout_state = AccountLockoutService.get_state(email)
+    identifier = _login_identifier(payload)
+    lockout_state = AccountLockoutService.get_state(identifier)
     if lockout_state.locked:
         AuditService.record(
             action="login_failed",
             status="locked",
             ip_address=_client_ip(),
             user_agent=_user_agent(),
-            metadata={"email": email, "reason": "account_locked"},
+            metadata={"identifier": identifier, "reason": "account_locked"},
         )
         return _error("Account is temporarily locked", 423)
 
-    user = AuthService.authenticate(email, payload["password"])
+    user = AuthService.authenticate(identifier, payload["password"])
     if user is None:
-        existing_user = UserService.get_by_email(email)
-        failure_state = AccountLockoutService.record_failure(email, existing_user.id if existing_user else None)
+        existing_user = UserService.get_by_login_identifier(identifier)
+        failure_state = AccountLockoutService.record_failure(identifier, existing_user.id if existing_user else None)
         AuditService.record(
             action="login_failed",
             status="failed",
@@ -192,18 +192,18 @@ def login():
             ip_address=_client_ip(),
             user_agent=_user_agent(),
             metadata={
-                "email": email,
+                "identifier": identifier,
                 "failed_attempts": failure_state.failed_attempts,
                 "locked": failure_state.locked,
                 "reason": "invalid_credentials",
             },
         )
-        return _error("Invalid email or password", 401)
+        return _error("Invalid email/username or password", 401)
 
     if user.id is None:
         return _error("User account is missing an ID", 500)
 
-    AccountLockoutService.clear(email)
+    AccountLockoutService.clear(identifier)
     AuditService.record(
         action="login",
         status="success",
@@ -394,14 +394,37 @@ def _validate_register_payload(payload: dict[str, Any]) -> dict[str, str]:
 
 def _validate_login_payload(payload: dict[str, Any]) -> dict[str, str]:
     errors: dict[str, str] = {}
-    _require_text(errors, payload, "email", max_length=100)
+    has_email = isinstance(payload.get("email"), str) and payload["email"].strip()
+    has_username = isinstance(payload.get("username"), str) and payload["username"].strip()
+
+    if has_email and has_username:
+        errors["login"] = "Provide either email or username, not both"
+    elif not has_email and not has_username:
+        errors["login"] = "Email or username is required"
+
+    if has_email:
+        email = payload["email"].strip()
+        if len(email) > 100:
+            errors["email"] = "Must be at most 100 characters"
+        elif not EMAIL_PATTERN.match(email):
+            errors["email"] = "Enter a valid email address"
+
+    if has_username:
+        username = payload["username"].strip()
+        if len(username) > 100:
+            errors["username"] = "Must be at most 100 characters"
+
     _require_text(errors, payload, "password", min_length=1, max_length=settings.password_max_length)
 
-    email = payload.get("email")
-    if isinstance(email, str) and not EMAIL_PATTERN.match(email.strip()):
-        errors["email"] = "Enter a valid email address"
-
     return errors
+
+
+def _login_identifier(payload: dict[str, Any]) -> str:
+    for field in ("email", "username"):
+        value = payload.get(field)
+        if isinstance(value, str) and value.strip():
+            return value.strip().lower()
+    return ""
 
 
 def _require_text(

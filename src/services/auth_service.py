@@ -8,8 +8,8 @@ from src.utils.security import create_access_token, create_refresh_token, decode
 
 class AuthService:
     @staticmethod
-    def authenticate(email: str, password: str) -> User | None:
-        user = UserService.get_by_email(email)
+    def authenticate(identifier: str, password: str) -> User | None:
+        user = UserService.get_by_login_identifier(identifier)
         if user is None or user.status != "active":
             return None
         if not verify_password(password, user.password):

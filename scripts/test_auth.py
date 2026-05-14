@@ -64,12 +64,13 @@ def print_logged_in_menu(current_user: dict) -> None:
 
 
 def login(client) -> tuple[str | None, str | None, dict | None]:
-    email = input(f"{Fore.CYAN}Email:{Style.RESET_ALL} ").strip()
+    login_value = input(f"{Fore.CYAN}Email or username:{Style.RESET_ALL} ").strip()
     password = getpass.getpass(f"{Fore.CYAN}Password:{Style.RESET_ALL} ")
+    login_field = "email" if "@" in login_value else "username"
 
     response = client.post(
         "/api/v1/auth/login",
-        json={"email": email, "password": password},
+        json={login_field: login_value, "password": password},
         headers={"Host": "localhost"},
     )
     body = response.get_json(silent=True) or {}

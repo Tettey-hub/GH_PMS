@@ -151,6 +151,22 @@ class UserService:
         return _get_user_by_field("email", email.lower())
 
     @staticmethod
+    def get_by_username(username: str) -> User | None:
+        return _get_user_by_field("username", username.lower())
+
+    @staticmethod
+    def get_by_login_identifier(identifier: str) -> User | None:
+        identifier = identifier.strip().lower()
+        if not identifier:
+            return None
+
+        user = UserService.get_by_email(identifier)
+        if user is not None:
+            return user
+
+        return UserService.get_by_username(identifier)
+
+    @staticmethod
     def get_by_officer_id(officer_id: str) -> User | None:
         return _get_user_by_field("officer_id", officer_id)
 
@@ -193,7 +209,7 @@ class UserService:
 
 
 def _get_user_by_field(field: str, value: str) -> User | None:
-    allowed_fields = {"email", "officer_id", "badge_number"}
+    allowed_fields = {"email", "username", "officer_id", "badge_number"}
     if field not in allowed_fields:
         raise ValueError("Unsupported user lookup field")
 
@@ -202,6 +218,8 @@ def _get_user_by_field(field: str, value: str) -> User | None:
         
         if field == "email":
             cursor.execute("SELECT * FROM users WHERE email = %s LIMIT 1", (value,))
+        elif field == "username":
+            cursor.execute("SELECT * FROM users WHERE username = %s LIMIT 1", (value,))
         elif field == "officer_id":
             cursor.execute("SELECT * FROM users WHERE officer_id = %s LIMIT 1", (value,))
         elif field == "badge_number":
