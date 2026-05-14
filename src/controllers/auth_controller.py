@@ -320,9 +320,124 @@ def list_users():
     })
 
 
+def get_staff_user():
+    try:
+        field, value = _staff_lookup_from_request()
+        user = UserService.get_by_staff_lookup(field, value)
+    except ValueError as exc:
+        return _error(str(exc), 400)
+
+    if user is None:
+        return _error("Staff user not found", 404)
+
+    return jsonify({"user": user.to_dict()})
+
+
+def update_staff_user():
+    payload = _json_payload()
+    try:
+        field, value = _staff_lookup_from_request()
+        updates = _staff_update_payload(payload)
+        errors = _validate_staff_update_payload(updates)
+        if errors:
+            return _error("Validation failed", 400, errors)
+        user = UserService.update_by_staff_lookup(field, value, updates)
+    except ValueError as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        if is_duplicate_user_error(exc):
+            return _error("Officer ID, email, staff ID, username, or badge number already exists", 409)
+        if isinstance(exc, MySQLError):
+            return _error("Database error while updating user", 500)
+        raise
+
+    if user is None:
+        return _error("Staff user not found", 404)
+
+    AuditService.record(
+        action="staff_updated",
+        status="success",
+        actor_user_id=g.current_user.id,
+        target_user_id=user.id,
+        ip_address=_client_ip(),
+        user_agent=_user_agent(),
+        metadata={"lookup_field": field, "updated_fields": sorted(updates.keys())},
+    )
+    return jsonify({"message": "Staff user updated successfully", "user": user.to_dict()})
+
+
+def delete_staff_user():
+    try:
+        field, value = _staff_lookup_from_request()
+        user = UserService.get_by_staff_lookup(field, value)
+    except ValueError as exc:
+        return _error(str(exc), 400)
+
+    if user is None:
+        return _error("Staff user not found", 404)
+    if user.id == g.current_user.id:
+        return _error("You cannot delete your own active account", 400)
+
+    try:
+        deleted_user = UserService.delete_by_staff_lookup(field, value)
+    except MySQLError:
+        return _error("Database error while deleting user", 500)
+
+    if deleted_user is None:
+        return _error("Staff user not found", 404)
+
+    AuditService.record(
+        action="staff_deleted",
+        status="success",
+        actor_user_id=g.current_user.id,
+        target_user_id=None,
+        ip_address=_client_ip(),
+        user_agent=_user_agent(),
+        metadata={
+            "deleted_user_id": deleted_user.id,
+            "lookup_field": field,
+            "officer_id": deleted_user.officer_id,
+            "staff_id": deleted_user.staff_id,
+            "badge_number": deleted_user.badge_number,
+            "username": deleted_user.username,
+        },
+    )
+    return jsonify({"message": "Staff user deleted successfully", "user": deleted_user.to_dict()})
+
+
 def _json_payload() -> dict[str, Any]:
     payload = request.get_json(silent=True)
     return payload if isinstance(payload, dict) else {}
+
+
+def _staff_lookup_from_request() -> tuple[str, str]:
+    payload = _json_payload()
+    query_payload = request.args.to_dict()
+    try:
+        return _staff_lookup_from_payload(query_payload)
+    except ValueError:
+        return _staff_lookup_from_payload(payload)
+
+
+def _staff_lookup_from_payload(payload: dict[str, Any]) -> tuple[str, str]:
+    lookup_fields = ("staff_id", "officer_id", "badge_number", "username")
+    provided = [
+        field
+        for field in lookup_fields
+        if isinstance(payload.get(field), str) and payload[field].strip()
+    ]
+    if len(provided) != 1:
+        raise ValueError("Provide exactly one lookup field: staff_id, officer_id, badge_number, or username")
+    field = provided[0]
+    return field, payload[field].strip()
+
+
+def _staff_update_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        field: value
+        for field, value in payload.items()
+        if field not in {"lookup_field", "lookup_value"}
+    }
 
 
 def _validate_register_payload(payload: dict[str, Any]) -> dict[str, str]:
@@ -417,6 +532,100 @@ def _validate_login_payload(payload: dict[str, Any]) -> dict[str, str]:
     _require_text(errors, payload, "password", min_length=1, max_length=settings.password_max_length)
 
     return errors
+
+
+def _validate_staff_update_payload(updates: dict[str, Any]) -> dict[str, str]:
+    errors: dict[str, str] = {}
+    allowed_fields = {
+        "officer_id",
+        "first_name",
+        "middle_name",
+        "last_name",
+        "gender",
+        "dob",
+        "email",
+        "password",
+        "phone",
+        "national_id",
+        "address",
+        "profile_image",
+        "rank",
+        "department",
+        "position",
+        "employment_date",
+        "branch",
+        "role_id",
+        "role",
+        "shift",
+        "status",
+        "date_joined",
+    }
+    for field in updates:
+        if field not in allowed_fields:
+            errors[field] = "This field cannot be updated here"
+
+    _validate_optional_length(errors, updates, "officer_id", 20)
+    _validate_optional_length(errors, updates, "first_name", 50)
+    _validate_optional_length(errors, updates, "middle_name", 50)
+    _validate_optional_length(errors, updates, "last_name", 50)
+    _validate_optional_length(errors, updates, "gender", 20)
+    _validate_optional_length(errors, updates, "email", 100)
+    _validate_optional_length(errors, updates, "phone", 20)
+    _validate_optional_length(errors, updates, "national_id", 50)
+    _validate_optional_length(errors, updates, "profile_image", 255)
+    _validate_optional_length(errors, updates, "rank", 50)
+    _validate_optional_length(errors, updates, "department", 50)
+    _validate_optional_length(errors, updates, "position", 100)
+    _validate_optional_length(errors, updates, "branch", 100)
+
+    email = updates.get("email")
+    if isinstance(email, str) and email.strip() and not EMAIL_PATTERN.match(email.strip()):
+        errors["email"] = "Enter a valid email address"
+
+    officer_id = updates.get("officer_id")
+    if isinstance(officer_id, str) and officer_id.strip() and not OFFICER_ID_PATTERN.match(officer_id.strip().upper()):
+        errors["officer_id"] = "Officer ID must use the format OFF001"
+
+    phone = updates.get("phone")
+    if phone not in {None, ""} and "phone" in updates and (not isinstance(phone, str) or not PHONE_PATTERN.match(phone.strip())):
+        errors["phone"] = "Enter a valid phone number"
+
+    role = str(updates.get("role", "")).strip().lower()
+    if role and role not in {"admin", "officer", "supervisor", "medical_officer", "records_officer", "visitor_officer"}:
+        errors["role"] = "Role must be admin, officer, supervisor, medical_officer, records_officer, or visitor_officer"
+
+    shift = str(updates.get("shift", "")).strip().lower()
+    if shift and shift not in {"morning", "afternoon", "night"}:
+        errors["shift"] = "Shift must be morning, afternoon, or night"
+
+    status = str(updates.get("status", "")).strip().lower()
+    if status and status not in {"active", "inactive", "suspended"}:
+        errors["status"] = "Status must be active, inactive, or suspended"
+
+    password = updates.get("password")
+    if isinstance(password, str) and password:
+        password_errors = _validate_password_strength(password)
+        if password_errors:
+            errors["password"] = "; ".join(password_errors)
+        if password in settings.compromised_passwords:
+            errors["password"] = "Password is not allowed"
+
+    _validate_optional_date(errors, updates, "dob")
+    _validate_optional_date(errors, updates, "employment_date")
+    _validate_optional_date(errors, updates, "date_joined")
+    _validate_optional_int(errors, updates, "role_id")
+
+    return errors
+
+
+def _validate_optional_length(errors: dict[str, str], payload: dict[str, Any], field: str, max_length: int) -> None:
+    value = payload.get(field)
+    if value in {None, ""}:
+        return
+    if not isinstance(value, str):
+        errors[field] = "Must be text"
+    elif len(value.strip()) > max_length:
+        errors[field] = f"Must be at most {max_length} characters"
 
 
 def _login_identifier(payload: dict[str, Any]) -> str:
