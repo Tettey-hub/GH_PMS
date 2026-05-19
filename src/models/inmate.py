@@ -11,6 +11,24 @@ INMATE_MARITAL_STATUSES = {"single", "married", "divorced", "widowed"}
 INMATE_NEXT_OF_KIN_RELATIONS = {"spouse", "parent", "sibling", "child", "other"}
 INMATE_SENTENCE_TYPES = {"remand", "convicted", "life", "death"}
 INMATE_STATUSES = {"active", "released", "transferred", "deceased"}
+INMATE_TRANSFER_TYPES = {
+    "INTERNAL_TRANSFER",
+    "INTER_PRISON_TRANSFER",
+    "MEDICAL_TRANSFER",
+    "COURT_TRANSFER",
+    "REHABILITATION_TRANSFER",
+    "EMERGENCY_TRANSFER",
+}
+INMATE_TRANSFER_STATUSES = {"PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED", "IN_TRANSIT", "COMPLETED", "CANCELLED"}
+INMATE_RELEASE_TYPES = {
+    "SENTENCE_COMPLETION",
+    "BAIL_RELEASE",
+    "PAROLE",
+    "PRESIDENTIAL_PARDON",
+    "MEDICAL_RELEASE",
+    "COURT_ACQUITTAL",
+}
+INMATE_RELEASE_STATUSES = {"PENDING_REVIEW", "LEGAL_VERIFICATION", "APPROVED", "REJECTED", "READY_FOR_RELEASE", "RELEASED"}
 
 INMATE_REQUIRED_TEXT_FIELD_LENGTHS = {
     "inmate_id": 20,
@@ -212,6 +230,170 @@ class Inmate:
             admission_date=row["admission_date"],
             admission_time=row["admission_time"],
             admission_officer_id=row["admission_officer_id"],
+            created_at=row.get("created_at"),
+            updated_at=row.get("updated_at"),
+        )
+
+
+@dataclass(frozen=True)
+class InmateTransfer:
+    id: int | None
+    inmate_id: int
+    current_facility: str
+    destination_facility: str
+    transfer_type: str
+    reason: str
+    security_level: str
+    medical_clearance: bool
+    legal_verified: bool
+    security_assessed: bool
+    transfer_status: str
+    urgency_level: str
+    requested_date: date
+    created_by: int
+    departure_date: date | None = None
+    arrival_date: date | None = None
+    escort_officers: str | None = None
+    transport_vehicle: str | None = None
+    route_details: str | None = None
+    movement_authorized_by: int | None = None
+    approved_by: int | None = None
+    receiving_officer: str | None = None
+    receiving_confirmation: bool = False
+    transfer_completion_notes: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "inmate_id": self.inmate_id,
+            "current_facility": self.current_facility,
+            "destination_facility": self.destination_facility,
+            "transfer_type": self.transfer_type,
+            "reason": self.reason,
+            "security_level": self.security_level,
+            "medical_clearance": self.medical_clearance,
+            "legal_verified": self.legal_verified,
+            "security_assessed": self.security_assessed,
+            "transfer_status": self.transfer_status,
+            "urgency_level": self.urgency_level,
+            "requested_date": self.requested_date.isoformat(),
+            "departure_date": self.departure_date.isoformat() if self.departure_date else None,
+            "arrival_date": self.arrival_date.isoformat() if self.arrival_date else None,
+            "escort_officers": self.escort_officers,
+            "transport_vehicle": self.transport_vehicle,
+            "route_details": self.route_details,
+            "movement_authorized_by": self.movement_authorized_by,
+            "approved_by": self.approved_by,
+            "receiving_officer": self.receiving_officer,
+            "receiving_confirmation": self.receiving_confirmation,
+            "transfer_completion_notes": self.transfer_completion_notes,
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    @classmethod
+    def from_row(cls, row: dict[str, Any]) -> "InmateTransfer":
+        return cls(
+            id=row.get("id"),
+            inmate_id=row["inmate_id"],
+            current_facility=row["current_facility"],
+            destination_facility=row["destination_facility"],
+            transfer_type=row["transfer_type"],
+            reason=row["reason"],
+            security_level=row["security_level"],
+            medical_clearance=bool(row["medical_clearance"]),
+            legal_verified=bool(row["legal_verified"]),
+            security_assessed=bool(row["security_assessed"]),
+            transfer_status=row["transfer_status"],
+            urgency_level=row["urgency_level"],
+            requested_date=row["requested_date"],
+            departure_date=row.get("departure_date"),
+            arrival_date=row.get("arrival_date"),
+            escort_officers=row.get("escort_officers"),
+            transport_vehicle=row.get("transport_vehicle"),
+            route_details=row.get("route_details"),
+            movement_authorized_by=row.get("movement_authorized_by"),
+            approved_by=row.get("approved_by"),
+            receiving_officer=row.get("receiving_officer"),
+            receiving_confirmation=bool(row["receiving_confirmation"]),
+            transfer_completion_notes=row.get("transfer_completion_notes"),
+            created_by=row["created_by"],
+            created_at=row.get("created_at"),
+            updated_at=row.get("updated_at"),
+        )
+
+
+@dataclass(frozen=True)
+class InmateRelease:
+    id: int | None
+    inmate_id: int
+    release_type: str
+    release_reason: str
+    sentence_validated: bool
+    legal_verified: bool
+    medical_cleared: bool
+    property_cleared: bool
+    identity_verified: bool
+    release_status: str
+    created_by: int
+    release_certificate_number: str | None = None
+    approved_by: int | None = None
+    release_date: date | None = None
+    release_time: time | None = None
+    discharge_notes: str | None = None
+    property_release_notes: str | None = None
+    medical_discharge_summary: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "inmate_id": self.inmate_id,
+            "release_type": self.release_type,
+            "release_reason": self.release_reason,
+            "sentence_validated": self.sentence_validated,
+            "legal_verified": self.legal_verified,
+            "medical_cleared": self.medical_cleared,
+            "property_cleared": self.property_cleared,
+            "identity_verified": self.identity_verified,
+            "release_certificate_number": self.release_certificate_number,
+            "approved_by": self.approved_by,
+            "release_date": self.release_date.isoformat() if self.release_date else None,
+            "release_time": self.release_time.isoformat() if self.release_time else None,
+            "release_status": self.release_status,
+            "discharge_notes": self.discharge_notes,
+            "property_release_notes": self.property_release_notes,
+            "medical_discharge_summary": self.medical_discharge_summary,
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    @classmethod
+    def from_row(cls, row: dict[str, Any]) -> "InmateRelease":
+        return cls(
+            id=row.get("id"),
+            inmate_id=row["inmate_id"],
+            release_type=row["release_type"],
+            release_reason=row["release_reason"],
+            sentence_validated=bool(row["sentence_validated"]),
+            legal_verified=bool(row["legal_verified"]),
+            medical_cleared=bool(row["medical_cleared"]),
+            property_cleared=bool(row["property_cleared"]),
+            identity_verified=bool(row["identity_verified"]),
+            release_certificate_number=row.get("release_certificate_number"),
+            approved_by=row.get("approved_by"),
+            release_date=row.get("release_date"),
+            release_time=row.get("release_time"),
+            release_status=row["release_status"],
+            discharge_notes=row.get("discharge_notes"),
+            property_release_notes=row.get("property_release_notes"),
+            medical_discharge_summary=row.get("medical_discharge_summary"),
+            created_by=row["created_by"],
             created_at=row.get("created_at"),
             updated_at=row.get("updated_at"),
         )

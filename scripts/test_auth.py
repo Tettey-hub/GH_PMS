@@ -22,8 +22,27 @@ from src.models.inmate import (
     INMATE_GENDERS,
     INMATE_MARITAL_STATUSES,
     INMATE_NEXT_OF_KIN_RELATIONS,
+    INMATE_RELEASE_TYPES,
     INMATE_SENTENCE_TYPES,
     INMATE_STATUSES,
+    INMATE_TRANSFER_TYPES,
+)
+from src.models.medical import (
+    APPOINTMENT_STATUSES,
+    APPOINTMENT_TYPES,
+    DIAGNOSIS_TYPES,
+    DISABILITY_STATUSES,
+    DRUG_TEST_STATUSES,
+    INFECTIOUS_DISEASE_STATUSES,
+    MALARIA_STATUSES,
+    MEDICAL_BLOOD_GROUPS,
+    MEDICAL_GENOTYPES,
+    MENTAL_HEALTH_SCREENING_STATUSES,
+    REFERRAL_STATUSES,
+    SCREENING_TYPES,
+    SEVERITY_LEVELS,
+    SUICIDE_RISK_LEVELS,
+    TREATMENT_STATUSES,
 )
 
 
@@ -65,7 +84,7 @@ def main() -> int:
                 "Generate legal reports",
             ])
         elif choice == "5":
-            show_medical_management_menu()
+            manage_medical_management(client, access_token)
         elif choice == "6":
             show_coming_soon_menu("Visitor Management", [
                 "Approve/reject visitor requests",
@@ -171,43 +190,19 @@ def show_coming_soon_menu(title: str, actions: list[str]) -> None:
             print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
 
 
-def show_medical_management_menu() -> None:
+def manage_medical_management(client, access_token: str | None) -> None:
+    if not access_token:
+        print(f"{Fore.YELLOW}Login as an admin or medical officer before using Medical Management.{Style.RESET_ALL}")
+        return
+
     sections = [
-        ("Medical Registration", [
-            "Create inmate medical profile",
-            "Record allergies",
-            "Chronic illness tracking",
-        ]),
-        ("Medical Screening", [
-            "Admission medical checks",
-            "Disease screening",
-            "Drug screening",
-        ]),
-        ("Treatment Management", [
-            "Diagnosis records",
-            "Treatment plans",
-            "Medical prescriptions",
-        ]),
-        ("Medication Management", [
-            "Medication schedules",
-            "Drug inventory",
-            "Medication administration tracking",
-        ]),
-        ("Appointment Scheduling", [
-            "Doctor appointments",
-            "Specialist referrals",
-            "Emergency treatment scheduling",
-        ]),
-        ("Mental Health Management", [
-            "Psychological assessment",
-            "Counseling records",
-            "Suicide-risk monitoring",
-        ]),
-        ("Medical Reports", [
-            "Health statistics",
-            "Disease outbreak reports",
-            "Medical treatment reports",
-        ]),
+        ("Medical Registration", manage_medical_registration),
+        ("Medical Screening", manage_medical_screening),
+        ("Treatment Management", manage_treatment_management),
+        ("Medication Management", manage_medication_management),
+        ("Appointment Scheduling", manage_appointment_scheduling),
+        ("Mental Health Management", manage_mental_health_management),
+        ("Medical Reports", manage_medical_reports),
     ]
 
     while True:
@@ -221,10 +216,415 @@ def show_medical_management_menu() -> None:
         if choice == str(len(sections) + 1):
             return
         if choice.isdigit() and 1 <= int(choice) <= len(sections):
-            section_title, actions = sections[int(choice) - 1]
-            show_coming_soon_menu(section_title, actions)
+            _, handler = sections[int(choice) - 1]
+            handler(client, access_token)
         else:
             print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_medical_registration(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Medical Registration{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Create inmate medical profile")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Update inmate medical profile")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} View inmate medical history")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            create_medical_profile(client, access_token)
+        elif choice == "2":
+            update_medical_profile(client, access_token)
+        elif choice == "3":
+            view_inmate_medical_history(client, access_token)
+        elif choice == "4":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_medical_screening(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Medical Screening{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Record screening")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate medical history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            record_medical_screening(client, access_token)
+        elif choice == "2":
+            view_inmate_medical_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_treatment_management(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Treatment Management{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Create diagnosis")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Create treatment plan")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Create prescription")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} View inmate treatment history")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            create_medical_diagnosis(client, access_token)
+        elif choice == "2":
+            create_treatment_plan(client, access_token)
+        elif choice == "3":
+            create_prescription(client, access_token)
+        elif choice == "4":
+            view_inmate_treatment_history(client, access_token)
+        elif choice == "5":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_medication_management(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Medication Management{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Create prescription")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Record medication administration")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} View inmate treatment history")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            create_prescription(client, access_token)
+        elif choice == "2":
+            record_medication_administration(client, access_token)
+        elif choice == "3":
+            view_inmate_treatment_history(client, access_token)
+        elif choice == "4":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_appointment_scheduling(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Appointment Scheduling{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Schedule medical appointment")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View referral facilities")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} View inmate medical history")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            schedule_medical_appointment(client, access_token)
+        elif choice == "2":
+            view_referral_facilities(client, access_token)
+        elif choice == "3":
+            view_inmate_medical_history(client, access_token)
+        elif choice == "4":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_mental_health_management(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Mental Health Management{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Create mental health record")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate medical history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            create_mental_health_record(client, access_token)
+        elif choice == "2":
+            view_inmate_medical_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_medical_reports(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Medical Reports{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Generate medical reports")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate medical history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} View inmate treatment history")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            view_medical_reports(client, access_token)
+        elif choice == "2":
+            view_inmate_medical_history(client, access_token)
+        elif choice == "3":
+            view_inmate_treatment_history(client, access_token)
+        elif choice == "4":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def create_medical_profile(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Create Medical Profile{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "blood_group": prompt_optional_exact_choice("Blood group", sorted(MEDICAL_BLOOD_GROUPS)),
+        "genotype": prompt_optional_exact_choice("Genotype", sorted(MEDICAL_GENOTYPES)),
+        "allergies": prompt_optional("Allergies"),
+        "chronic_illnesses": prompt_optional("Chronic illnesses"),
+        "disability_status": prompt_choice("Disability status", sorted(DISABILITY_STATUSES)),
+        "disability_description": prompt_optional("Disability description"),
+        "emergency_medical_notes": prompt_optional("Emergency medical notes"),
+        "current_medications": prompt_optional("Current medications"),
+        "primary_physician": prompt_optional("Primary physician"),
+    })
+    _post_medical_record(client, access_token, "/api/v1/medical/profiles", payload, "medical_profile", "Medical profile created")
+
+
+def update_medical_profile(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Update Medical Profile{Style.RESET_ALL}")
+    inmate_id = prompt_required_int("Inmate database ID")
+    print(f"{Fore.WHITE}Leave a field blank to keep the current value.{Style.RESET_ALL}")
+    payload = clean_payload({
+        "blood_group": prompt_optional_exact_choice("Blood group", sorted(MEDICAL_BLOOD_GROUPS)),
+        "genotype": prompt_optional_exact_choice("Genotype", sorted(MEDICAL_GENOTYPES)),
+        "allergies": prompt_optional("Allergies"),
+        "chronic_illnesses": prompt_optional("Chronic illnesses"),
+        "disability_status": prompt_optional_choice("Disability status", sorted(DISABILITY_STATUSES)),
+        "disability_description": prompt_optional("Disability description"),
+        "emergency_medical_notes": prompt_optional("Emergency medical notes"),
+        "current_medications": prompt_optional("Current medications"),
+        "primary_physician": prompt_optional("Primary physician"),
+    })
+    if not payload:
+        print(f"{Fore.YELLOW}No profile changes provided.{Style.RESET_ALL}")
+        return
+    response = client.patch(
+        f"/api/v1/medical/profiles/{inmate_id}",
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Medical profile update failed", body)
+        return
+    print(f"{Fore.GREEN}Medical profile updated.{Style.RESET_ALL}")
+    print_medical_details(body.get("medical_profile", {}))
+
+
+def record_medical_screening(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Record Medical Screening{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "screening_date": prompt_required("Screening date (YYYY-MM-DD)"),
+        "screening_type": prompt_choice("Screening type", sorted(SCREENING_TYPES)),
+        "temperature": prompt_optional("Temperature"),
+        "blood_pressure": prompt_optional("Blood pressure (120/80 format)"),
+        "weight_kg": prompt_optional("Weight KG"),
+        "height_cm": prompt_optional("Height CM"),
+        "infectious_disease_status": prompt_choice("Infectious disease status", sorted(INFECTIOUS_DISEASE_STATUSES)),
+        "malaria_status": prompt_choice("Malaria status", sorted(MALARIA_STATUSES)),
+        "drug_test_status": prompt_choice("Drug test status", sorted(DRUG_TEST_STATUSES)),
+        "mental_health_status": prompt_choice("Mental health status", sorted(MENTAL_HEALTH_SCREENING_STATUSES)),
+        "screening_notes": prompt_optional("Screening notes"),
+    })
+    _post_medical_record(client, access_token, "/api/v1/medical/screenings", payload, "screening", "Medical screening recorded")
+
+
+def create_medical_diagnosis(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Create Diagnosis{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "diagnosis_name": prompt_required("Diagnosis name"),
+        "diagnosis_type": prompt_choice("Diagnosis type", sorted(DIAGNOSIS_TYPES)),
+        "diagnosis_date": prompt_required("Diagnosis date (YYYY-MM-DD)"),
+        "severity_level": prompt_choice("Severity level", sorted(SEVERITY_LEVELS)),
+        "diagnosis_notes": prompt_optional("Diagnosis notes"),
+    })
+    _post_medical_record(client, access_token, "/api/v1/medical/diagnoses", payload, "diagnosis", "Diagnosis created")
+
+
+def create_treatment_plan(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Create Treatment Plan{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "diagnosis_id": prompt_required_int("Diagnosis ID"),
+        "treatment_plan": prompt_required("Treatment plan"),
+        "treatment_start_date": prompt_required("Treatment start date (YYYY-MM-DD)"),
+        "treatment_end_date": prompt_optional("Treatment end date (YYYY-MM-DD)"),
+        "treatment_status": prompt_choice("Treatment status", sorted(TREATMENT_STATUSES)),
+    })
+    _post_medical_record(client, access_token, "/api/v1/medical/treatment-plans", payload, "treatment_plan", "Treatment plan created")
+
+
+def create_prescription(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Create Prescription{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "medication_name": prompt_required("Medication name"),
+        "dosage": prompt_required("Dosage"),
+        "frequency": prompt_required("Frequency"),
+        "duration": prompt_required("Duration"),
+        "prescription_notes": prompt_optional("Prescription notes"),
+        "prescribed_date": prompt_required("Prescribed date (YYYY-MM-DD)"),
+    })
+    _post_medical_record(client, access_token, "/api/v1/medical/prescriptions", payload, "prescription", "Prescription created")
+
+
+def record_medication_administration(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Record Medication Administration{Style.RESET_ALL}")
+    payload = clean_payload({
+        "prescription_id": prompt_required_int("Prescription ID"),
+        "administration_time": prompt_required("Administration time (YYYY-MM-DDTHH:MM:SS)"),
+        "administration_notes": prompt_optional("Administration notes"),
+    })
+    _post_medical_record(
+        client,
+        access_token,
+        "/api/v1/medical/medication-administrations",
+        payload,
+        "medication_administration_log",
+        "Medication administration recorded",
+    )
+
+
+def schedule_medical_appointment(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Schedule Medical Appointment{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "appointment_type": prompt_choice("Appointment type", sorted(APPOINTMENT_TYPES)),
+        "appointment_date": prompt_required("Appointment date (YYYY-MM-DD)"),
+        "appointment_time": prompt_required("Appointment time (HH:MM)"),
+        "facility_name": prompt_required("Facility name"),
+        "doctor_name": prompt_optional("Doctor name"),
+        "referral_status": prompt_choice("Referral status", sorted(REFERRAL_STATUSES)),
+        "appointment_status": prompt_choice("Appointment status", sorted(APPOINTMENT_STATUSES)),
+        "emergency_case": prompt_bool("Emergency case"),
+        "notes": prompt_optional("Notes"),
+    })
+    _post_medical_record(client, access_token, "/api/v1/medical/appointments", payload, "appointment", "Medical appointment scheduled")
+
+
+def create_mental_health_record(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Create Mental Health Record{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "psychological_assessment": prompt_required("Psychological assessment"),
+        "counseling_notes": prompt_optional("Counseling notes"),
+        "suicide_risk_level": prompt_choice("Suicide risk level", sorted(SUICIDE_RISK_LEVELS)),
+        "behavioral_observations": prompt_optional("Behavioral observations"),
+        "assessment_date": prompt_required("Assessment date (YYYY-MM-DD)"),
+    })
+    _post_medical_record(client, access_token, "/api/v1/medical/mental-health-records", payload, "mental_health_record", "Mental health record created")
+
+
+def view_inmate_medical_history(client, access_token: str) -> None:
+    inmate_id = prompt_required_int("Inmate database ID")
+    response = client.get(
+        f"/api/v1/medical/inmates/{inmate_id}/history",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Medical history lookup failed", body)
+        return
+    print_medical_history(body.get("medical_history", {}))
+
+
+def view_inmate_treatment_history(client, access_token: str) -> None:
+    inmate_id = prompt_required_int("Inmate database ID")
+    response = client.get(
+        f"/api/v1/medical/inmates/{inmate_id}/treatments",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Treatment history lookup failed", body)
+        return
+    print_medical_history(body.get("treatment_history", {}))
+
+
+def view_medical_reports(client, access_token: str) -> None:
+    response = client.get(
+        "/api/v1/medical/reports",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Medical reports failed", body)
+        return
+    print_medical_history(body.get("medical_reports", {}))
+
+
+def view_referral_facilities(client, access_token: str) -> None:
+    response = client.get(
+        "/api/v1/medical/referral-facilities",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Referral facilities lookup failed", body)
+        return
+    facilities = body.get("referral_facilities")
+    if not isinstance(facilities, list) or not facilities:
+        print(f"{Fore.YELLOW}No referral facilities configured.{Style.RESET_ALL}")
+        return
+    print(tabulate([[facility] for facility in facilities], headers=["Referral Facility"], tablefmt="grid"))
+
+
+def _post_medical_record(client, access_token: str, endpoint: str, payload: dict[str, object], response_key: str, success_label: str) -> None:
+    response = client.post(
+        endpoint,
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 201:
+        print_api_error(f"{success_label} failed", body)
+        return
+    print(f"{Fore.GREEN}{success_label}.{Style.RESET_ALL}")
+    print_medical_details(body.get(response_key, {}))
+
+
+def print_medical_details(record: object) -> None:
+    if not isinstance(record, dict):
+        print(f"{Fore.YELLOW}No record details returned.{Style.RESET_ALL}")
+        return
+    rows = [[field, value] for field, value in record.items()]
+    print(tabulate(rows, headers=["Field", "Value"], tablefmt="grid"))
+
+
+def print_record_details(record: object) -> None:
+    if not isinstance(record, dict):
+        print(f"{Fore.YELLOW}No record details returned.{Style.RESET_ALL}")
+        return
+    rows = [[field, value] for field, value in record.items()]
+    print(tabulate(rows, headers=["Field", "Value"], tablefmt="grid"))
+
+
+def print_record_list(title: str, records: object) -> None:
+    if not isinstance(records, list):
+        print(f"{Fore.RED}{title}:{Style.RESET_ALL} invalid response.")
+        return
+    if not records:
+        print(f"{Fore.YELLOW}No {title.lower()} found.{Style.RESET_ALL}")
+        return
+    print(f"\n{Fore.GREEN}{title} ({len(records)}){Style.RESET_ALL}")
+    print(tabulate(records, headers="keys", tablefmt="grid"))
+
+
+def print_medical_history(history: object) -> None:
+    if not isinstance(history, dict):
+        print(f"{Fore.RED}Invalid medical response.{Style.RESET_ALL}")
+        return
+    for section, value in history.items():
+        print(f"\n{Fore.GREEN}{section.replace('_', ' ').title()}{Style.RESET_ALL}")
+        if isinstance(value, list):
+            if not value:
+                print(f"{Fore.YELLOW}No records found.{Style.RESET_ALL}")
+            else:
+                print(tabulate(value, headers="keys", tablefmt="grid"))
+        elif isinstance(value, dict):
+            print_medical_details(value)
+        elif value is None:
+            print(f"{Fore.YELLOW}No record found.{Style.RESET_ALL}")
+        else:
+            print(value)
 
 
 def show_housing_and_movement_menu() -> None:
@@ -884,8 +1284,8 @@ def manage_inmates(client, access_token: str | None) -> None:
         print(f"{Fore.YELLOW}5.{Style.RESET_ALL} View inmate profiles")
         print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Search inmates")
         print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Update inmate status")
-        print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Approve inmate transfers")
-        print(f"{Fore.YELLOW}9.{Style.RESET_ALL} Approve inmate releases")
+        print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Inmate Transfer Management")
+        print(f"{Fore.YELLOW}9.{Style.RESET_ALL} Inmate Release Management")
         print(f"{Fore.YELLOW}10.{Style.RESET_ALL} Back")
 
         choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
@@ -904,9 +1304,9 @@ def manage_inmates(client, access_token: str | None) -> None:
         elif choice == "7":
             set_inmate_status(client, access_token)
         elif choice == "8":
-            approve_inmate_transfer(client, access_token)
+            manage_inmate_transfers(client, access_token)
         elif choice == "9":
-            approve_inmate_release(client, access_token)
+            manage_inmate_releases(client, access_token)
         elif choice == "10":
             return
         else:
@@ -1162,42 +1562,305 @@ def set_inmate_status(client, access_token: str) -> None:
     print(f"{Fore.GREEN}Inmate status updated:{Style.RESET_ALL} {inmate.get('inmate_id')} -> {inmate.get('status')}")
 
 
-def approve_inmate_transfer(client, access_token: str) -> None:
-    inmate_db_id = prompt_required_int("Inmate database ID")
-    confirm = input(f"{Fore.RED}Type TRANSFER to approve inmate transfer:{Style.RESET_ALL} ").strip()
-    if confirm != "TRANSFER":
-        print(f"{Fore.YELLOW}Transfer approval cancelled.{Style.RESET_ALL}")
-        return
+def manage_inmate_transfers(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Inmate Transfer Management{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Create transfer request")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Review transfer")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Legal verification")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Security assessment")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Medical clearance")
+        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Approve transfer")
+        print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Reject transfer")
+        print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Assign transportation")
+        print(f"{Fore.YELLOW}9.{Style.RESET_ALL} Authorize movement")
+        print(f"{Fore.YELLOW}10.{Style.RESET_ALL} Execute transfer")
+        print(f"{Fore.YELLOW}11.{Style.RESET_ALL} Confirm arrival")
+        print(f"{Fore.YELLOW}12.{Style.RESET_ALL} Complete transfer")
+        print(f"{Fore.YELLOW}13.{Style.RESET_ALL} Cancel transfer")
+        print(f"{Fore.YELLOW}14.{Style.RESET_ALL} View transfer history")
+        print(f"{Fore.YELLOW}15.{Style.RESET_ALL} Search transfers")
+        print(f"{Fore.YELLOW}16.{Style.RESET_ALL} Transfer reports")
+        print(f"{Fore.YELLOW}17.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            create_transfer_request(client, access_token)
+        elif choice == "2":
+            patch_transfer(client, access_token, "review", {})
+        elif choice == "3":
+            patch_transfer(client, access_token, "legal-verification", {"legal_verified": prompt_bool("Legal verified")})
+        elif choice == "4":
+            patch_transfer(client, access_token, "security-assessment", {"security_assessed": prompt_bool("Security assessed")})
+        elif choice == "5":
+            patch_transfer(client, access_token, "medical-clearance", {"medical_clearance": prompt_bool("Medical clearance")})
+        elif choice == "6":
+            patch_transfer(client, access_token, "approve", {})
+        elif choice == "7":
+            patch_transfer(client, access_token, "reject", {"reason": prompt_required("Rejection reason")})
+        elif choice == "8":
+            patch_transfer(client, access_token, "transportation", clean_payload({
+                "escort_officers": prompt_required("Escort officers"),
+                "transport_vehicle": prompt_required("Transport vehicle"),
+                "route_details": prompt_optional("Route details"),
+            }))
+        elif choice == "9":
+            patch_transfer(client, access_token, "authorize-movement", {})
+        elif choice == "10":
+            patch_transfer(client, access_token, "execute", {"departure_date": prompt_required("Departure date (YYYY-MM-DD)")})
+        elif choice == "11":
+            patch_transfer(client, access_token, "confirm-arrival", {
+                "arrival_date": prompt_required("Arrival date (YYYY-MM-DD)"),
+                "receiving_officer": prompt_required("Receiving officer"),
+                "receiving_confirmation": prompt_bool("Receiving confirmation"),
+            })
+        elif choice == "12":
+            patch_transfer(client, access_token, "complete", clean_payload({"transfer_completion_notes": prompt_optional("Completion notes")}))
+        elif choice == "13":
+            patch_transfer(client, access_token, "cancel", {"reason": prompt_required("Cancellation reason")})
+        elif choice == "14":
+            view_transfer_history(client, access_token)
+        elif choice == "15":
+            search_transfers(client, access_token)
+        elif choice == "16":
+            view_transfer_reports(client, access_token)
+        elif choice == "17":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
 
+
+def create_transfer_request(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Create Transfer Request{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "current_facility": prompt_required("Current facility"),
+        "destination_facility": prompt_required("Destination facility"),
+        "transfer_type": prompt_exact_choice("Transfer type", sorted(INMATE_TRANSFER_TYPES)),
+        "reason": prompt_required("Reason"),
+        "security_level": prompt_required("Security level"),
+        "urgency_level": prompt_required("Urgency level"),
+        "requested_date": prompt_required("Requested date (YYYY-MM-DD)"),
+    })
+    response = client.post(
+        "/api/v1/inmates/transfers",
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 201:
+        print_api_error("Transfer request failed", body)
+        return
+    print(f"{Fore.GREEN}Transfer request created.{Style.RESET_ALL}")
+    print_record_details(body.get("transfer", {}))
+
+
+def patch_transfer(client, access_token: str, action: str, payload: dict[str, object]) -> None:
+    transfer_id = prompt_required_int("Transfer ID")
     response = client.patch(
-        f"/api/v1/inmates/{inmate_db_id}/approve-transfer",
+        f"/api/v1/inmates/transfers/{transfer_id}/{action}",
+        json=payload,
         headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
     )
     body = response.get_json(silent=True) or {}
     if response.status_code != 200:
-        print_api_error("Transfer approval failed", body)
+        print_api_error("Transfer workflow failed", body)
         return
-    inmate = body.get("inmate", {})
-    print(f"{Fore.GREEN}Transfer approved:{Style.RESET_ALL} {inmate.get('inmate_id')} -> {inmate.get('status')}")
+    print(f"{Fore.GREEN}Transfer workflow updated.{Style.RESET_ALL}")
+    print_record_details(body.get("transfer", {}))
 
 
-def approve_inmate_release(client, access_token: str) -> None:
+def view_transfer_history(client, access_token: str) -> None:
     inmate_db_id = prompt_required_int("Inmate database ID")
-    confirm = input(f"{Fore.RED}Type RELEASE to approve inmate release:{Style.RESET_ALL} ").strip()
-    if confirm != "RELEASE":
-        print(f"{Fore.YELLOW}Release approval cancelled.{Style.RESET_ALL}")
-        return
-
-    response = client.patch(
-        f"/api/v1/inmates/{inmate_db_id}/approve-release",
+    response = client.get(
+        f"/api/v1/inmates/{inmate_db_id}/transfers",
         headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
     )
     body = response.get_json(silent=True) or {}
     if response.status_code != 200:
-        print_api_error("Release approval failed", body)
+        print_api_error("Transfer history failed", body)
         return
-    inmate = body.get("inmate", {})
-    print(f"{Fore.GREEN}Release approved:{Style.RESET_ALL} {inmate.get('inmate_id')} -> {inmate.get('status')}")
+    print_record_list("Transfers", body.get("transfers"))
+
+
+def search_transfers(client, access_token: str) -> None:
+    query = clean_payload({
+        "inmate_id": prompt_optional_int("Inmate database ID"),
+        "transfer_type": prompt_optional_exact_choice("Transfer type", sorted(INMATE_TRANSFER_TYPES)),
+        "transfer_status": prompt_optional("Transfer status"),
+        "facility": prompt_optional("Facility"),
+        "date_from": prompt_optional("Requested date from (YYYY-MM-DD)"),
+        "date_to": prompt_optional("Requested date to (YYYY-MM-DD)"),
+        "approved_by": prompt_optional_int("Approved by user ID"),
+    })
+    response = client.get(
+        "/api/v1/inmates/transfers",
+        query_string=query,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Transfer search failed", body)
+        return
+    print_record_list("Transfers", body.get("transfers"))
+
+
+def view_transfer_reports(client, access_token: str) -> None:
+    response = client.get(
+        "/api/v1/inmates/transfers/reports",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Transfer reports failed", body)
+        return
+    print_record_list("Transfer Reports", body.get("transfer_reports"))
+
+
+def manage_inmate_releases(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Inmate Release Management{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Initiate release review")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Legal verification")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Sentence validation")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Medical clearance")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Property clearance")
+        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Identity verification")
+        print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Approve release")
+        print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Reject release")
+        print(f"{Fore.YELLOW}9.{Style.RESET_ALL} Generate release documents")
+        print(f"{Fore.YELLOW}10.{Style.RESET_ALL} Execute inmate release")
+        print(f"{Fore.YELLOW}11.{Style.RESET_ALL} View release history")
+        print(f"{Fore.YELLOW}12.{Style.RESET_ALL} Search releases")
+        print(f"{Fore.YELLOW}13.{Style.RESET_ALL} Release reports")
+        print(f"{Fore.YELLOW}14.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            initiate_release_review(client, access_token)
+        elif choice == "2":
+            patch_release(client, access_token, "legal-verification", {"legal_verified": prompt_bool("Legal verified")})
+        elif choice == "3":
+            patch_release(client, access_token, "sentence-validation", {"sentence_validated": prompt_bool("Sentence validated")})
+        elif choice == "4":
+            patch_release(client, access_token, "medical-clearance", clean_payload({
+                "medical_cleared": prompt_bool("Medical cleared"),
+                "medical_discharge_summary": prompt_optional("Medical discharge summary"),
+            }))
+        elif choice == "5":
+            patch_release(client, access_token, "property-clearance", clean_payload({
+                "property_cleared": prompt_bool("Property cleared"),
+                "property_release_notes": prompt_optional("Property release notes"),
+            }))
+        elif choice == "6":
+            patch_release(client, access_token, "identity-verification", {
+                "identity_verified": prompt_bool("Identity verified"),
+                "discharge_notes": prompt_required("Identity verification notes"),
+            })
+        elif choice == "7":
+            patch_release(client, access_token, "approve", {})
+        elif choice == "8":
+            patch_release(client, access_token, "reject", {"reason": prompt_required("Rejection reason")})
+        elif choice == "9":
+            patch_release(client, access_token, "documents", clean_payload({
+                "release_certificate_number": prompt_required("Release certificate number"),
+                "discharge_notes": prompt_optional("Discharge notes"),
+            }))
+        elif choice == "10":
+            patch_release(client, access_token, "execute", clean_payload({
+                "release_date": prompt_required("Release date (YYYY-MM-DD)"),
+                "release_time": prompt_required("Release time (HH:MM)"),
+                "discharge_notes": prompt_optional("Discharge notes"),
+            }))
+        elif choice == "11":
+            view_release_history(client, access_token)
+        elif choice == "12":
+            search_releases(client, access_token)
+        elif choice == "13":
+            view_release_reports(client, access_token)
+        elif choice == "14":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def initiate_release_review(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Initiate Release Review{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "release_type": prompt_exact_choice("Release type", sorted(INMATE_RELEASE_TYPES)),
+        "release_reason": prompt_required("Release reason"),
+    })
+    response = client.post(
+        "/api/v1/inmates/releases",
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 201:
+        print_api_error("Release review failed", body)
+        return
+    print(f"{Fore.GREEN}Release review initiated.{Style.RESET_ALL}")
+    print_record_details(body.get("release", {}))
+
+
+def patch_release(client, access_token: str, action: str, payload: dict[str, object]) -> None:
+    release_id = prompt_required_int("Release ID")
+    response = client.patch(
+        f"/api/v1/inmates/releases/{release_id}/{action}",
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Release workflow failed", body)
+        return
+    print(f"{Fore.GREEN}Release workflow updated.{Style.RESET_ALL}")
+    print_record_details(body.get("release", {}))
+
+
+def view_release_history(client, access_token: str) -> None:
+    inmate_db_id = prompt_required_int("Inmate database ID")
+    response = client.get(
+        f"/api/v1/inmates/{inmate_db_id}/releases",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Release history failed", body)
+        return
+    print_record_list("Releases", body.get("releases"))
+
+
+def search_releases(client, access_token: str) -> None:
+    query = clean_payload({
+        "inmate_id": prompt_optional_int("Inmate database ID"),
+        "release_type": prompt_optional_exact_choice("Release type", sorted(INMATE_RELEASE_TYPES)),
+        "release_status": prompt_optional("Release status"),
+        "date_from": prompt_optional("Release date from (YYYY-MM-DD)"),
+        "date_to": prompt_optional("Release date to (YYYY-MM-DD)"),
+        "approved_by": prompt_optional_int("Approved by user ID"),
+    })
+    response = client.get(
+        "/api/v1/inmates/releases",
+        query_string=query,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Release search failed", body)
+        return
+    print_record_list("Releases", body.get("releases"))
+
+
+def view_release_reports(client, access_token: str) -> None:
+    response = client.get(
+        "/api/v1/inmates/releases/reports",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Release reports failed", body)
+        return
+    print_record_list("Release Reports", body.get("release_reports"))
 
 
 def delete_inmate_record(client, access_token: str) -> None:
@@ -1567,6 +2230,23 @@ def prompt_choice(label: str, options: list[str]) -> str:
         print(f"{Fore.RED}Invalid selection.{Style.RESET_ALL}")
 
 
+def prompt_exact_choice(label: str, options: list[str]) -> str:
+    normalized_options = {option.lower(): option for option in options}
+    while True:
+        print(f"{Fore.CYAN}{label}:{Style.RESET_ALL}")
+        for index, option in enumerate(options, start=1):
+            print(f"  {Fore.YELLOW}{index}.{Style.RESET_ALL} {option}")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice.isdigit():
+            selected_index = int(choice) - 1
+            if 0 <= selected_index < len(options):
+                return options[selected_index]
+        selected = normalized_options.get(choice.lower())
+        if selected:
+            return selected
+        print(f"{Fore.RED}Invalid selection.{Style.RESET_ALL}")
+
+
 def prompt_optional_choice(label: str, options: list[str]) -> str | None:
     normalized_options = {option.lower(): option for option in options}
     while True:
@@ -1584,6 +2264,36 @@ def prompt_optional_choice(label: str, options: list[str]) -> str | None:
         if choice in normalized_options:
             return normalized_options[choice].lower()
         print(f"{Fore.RED}Invalid selection.{Style.RESET_ALL}")
+
+
+def prompt_optional_exact_choice(label: str, options: list[str]) -> str | None:
+    normalized_options = {option.lower(): option for option in options}
+    while True:
+        print(f"{Fore.CYAN}{label} (optional):{Style.RESET_ALL}")
+        print(f"  {Fore.YELLOW}0.{Style.RESET_ALL} Skip")
+        for index, option in enumerate(options, start=1):
+            print(f"  {Fore.YELLOW}{index}.{Style.RESET_ALL} {option}")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice in {"", "0"}:
+            return None
+        if choice.isdigit():
+            selected_index = int(choice) - 1
+            if 0 <= selected_index < len(options):
+                return options[selected_index]
+        selected = normalized_options.get(choice.lower())
+        if selected:
+            return selected
+        print(f"{Fore.RED}Invalid selection.{Style.RESET_ALL}")
+
+
+def prompt_bool(label: str) -> bool:
+    while True:
+        value = input(f"{Fore.CYAN}{label} (yes/no):{Style.RESET_ALL} ").strip().lower()
+        if value in {"yes", "y", "true", "1"}:
+            return True
+        if value in {"no", "n", "false", "0"}:
+            return False
+        print(f"{Fore.RED}{label} must be yes or no.{Style.RESET_ALL}")
 
 
 def prompt_password() -> str:

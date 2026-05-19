@@ -17,6 +17,7 @@ from src.middlewares.security_headers_middleware import register_security_header
 from src.routes.arrest_warrant_routes import arrest_warrant_bp
 from src.routes.auth_routes import auth_bp
 from src.routes.inmate_routes import inmate_bp
+from src.routes.medical_routes import medical_bp
 
 
 def create_app() -> Flask:
@@ -50,6 +51,7 @@ def create_app() -> Flask:
     app.register_blueprint(auth_bp, url_prefix=f"{settings.api_prefix}/auth")
     app.register_blueprint(arrest_warrant_bp, url_prefix=f"{settings.api_prefix}/arrest-warrants")
     app.register_blueprint(inmate_bp, url_prefix=f"{settings.api_prefix}/inmates")
+    app.register_blueprint(medical_bp, url_prefix=f"{settings.api_prefix}/medical")
 
     @app.get("/")
     def root():

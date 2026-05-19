@@ -61,7 +61,14 @@ INSERT IGNORE INTO permissions (name, description, module, action) VALUES
 ('incidents_create', 'Report new incidents', 'incidents', 'create'),
 ('incidents_read', 'View incident details', 'incidents', 'read'),
 ('incidents_update', 'Update incident information', 'incidents', 'update'),
-('incidents_delete', 'Delete incidents', 'incidents', 'delete');
+('incidents_delete', 'Delete incidents', 'incidents', 'delete'),
+
+-- Medical and Health Management
+('manage_medical_module', 'Access medical and health management module', 'medical', 'manage'),
+('medical_create', 'Create medical records', 'medical', 'create'),
+('medical_read', 'View medical records', 'medical', 'read'),
+('medical_update', 'Update medical records', 'medical', 'update'),
+('medical_reports', 'Generate medical reports', 'medical', 'reports');
 
 -- Set admin permissions (all modules + CRUD)
 INSERT IGNORE INTO role_permissions (role, permission_id)
@@ -94,7 +101,8 @@ INSERT IGNORE INTO role_permissions (role, permission_id)
 SELECT 'medical_officer', id FROM permissions
 WHERE name IN (
     'manage_records_module', 'records_create', 'records_read', 'records_update',
-    'manage_incidents_module', 'incidents_create', 'incidents_read'
+    'manage_incidents_module', 'incidents_create', 'incidents_read',
+    'manage_medical_module', 'medical_create', 'medical_read', 'medical_update', 'medical_reports'
 );
 
 -- Set records officer permissions (records management)

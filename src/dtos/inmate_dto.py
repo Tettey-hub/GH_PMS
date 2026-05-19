@@ -14,8 +14,12 @@ from src.models.inmate import (
     INMATE_ENUM_FIELD_VALUES,
     INMATE_INT_FIELDS,
     INMATE_OPTIONAL_TEXT_FIELD_LENGTHS,
+    INMATE_RELEASE_STATUSES,
+    INMATE_RELEASE_TYPES,
     INMATE_REQUIRED_TEXT_FIELD_LENGTHS,
     INMATE_TEXT_AREA_FIELDS,
+    INMATE_TRANSFER_STATUSES,
+    INMATE_TRANSFER_TYPES,
     Inmate,
 )
 
@@ -147,6 +151,186 @@ class InmateResponseDTO:
         return self.inmate.to_dict()
 
 
+@dataclass(frozen=True)
+class CreateTransferRequestDTO:
+    inmate_id: int
+    current_facility: str
+    destination_facility: str
+    transfer_type: str
+    reason: str
+    security_level: str
+    urgency_level: str
+    requested_date: date
+    created_by: int
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any], *, actor_user_id: int) -> "CreateTransferRequestDTO":
+        errors: dict[str, str] = {}
+        _require_int(errors, payload, "inmate_id")
+        for field in ("current_facility", "destination_facility", "reason", "security_level", "urgency_level"):
+            _require_text(errors, payload, field, max_length=150 if field.endswith("facility") else 100)
+        _require_upper_enum(errors, payload, "transfer_type", INMATE_TRANSFER_TYPES)
+        _require_date(errors, payload, "requested_date")
+        if errors:
+            raise InmateValidationError(errors)
+        return cls(
+            inmate_id=int(payload["inmate_id"]),
+            current_facility=_required_string(payload, "current_facility"),
+            destination_facility=_required_string(payload, "destination_facility"),
+            transfer_type=_required_string(payload, "transfer_type").upper(),
+            reason=_required_string(payload, "reason"),
+            security_level=_required_string(payload, "security_level"),
+            urgency_level=_required_string(payload, "urgency_level"),
+            requested_date=_required_date(payload, "requested_date"),
+            created_by=actor_user_id,
+        )
+
+
+@dataclass(frozen=True)
+class TransferActionDTO:
+    updates: dict[str, Any]
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any], *, action: str, actor_user_id: int) -> "TransferActionDTO":
+        errors: dict[str, str] = {}
+        updates: dict[str, Any] = {}
+        if action == "review":
+            updates["transfer_status"] = "UNDER_REVIEW"
+            _optional_text(errors, payload, "transfer_completion_notes")
+        elif action == "legal_verification":
+            _require_bool(errors, payload, "legal_verified")
+            updates["legal_verified"] = _required_bool(payload, "legal_verified")
+        elif action == "security_assessment":
+            _require_bool(errors, payload, "security_assessed")
+            updates["security_assessed"] = _required_bool(payload, "security_assessed")
+        elif action == "medical_clearance":
+            _require_bool(errors, payload, "medical_clearance")
+            updates["medical_clearance"] = _required_bool(payload, "medical_clearance")
+        elif action == "approve":
+            updates["transfer_status"] = "APPROVED"
+            updates["approved_by"] = actor_user_id
+        elif action == "reject":
+            _require_text(errors, payload, "reason")
+            updates["transfer_status"] = "REJECTED"
+            updates["transfer_completion_notes"] = _required_string(payload, "reason") if "reason" not in errors else None
+        elif action == "transportation":
+            _require_text(errors, payload, "escort_officers")
+            _require_text(errors, payload, "transport_vehicle", max_length=100)
+            _optional_text(errors, payload, "route_details")
+            updates.update({
+                "escort_officers": _optional_string(payload.get("escort_officers")),
+                "transport_vehicle": _optional_string(payload.get("transport_vehicle")),
+                "route_details": _optional_string(payload.get("route_details")),
+            })
+        elif action == "authorize_movement":
+            updates["movement_authorized_by"] = actor_user_id
+        elif action == "execute":
+            _require_date(errors, payload, "departure_date")
+            updates["transfer_status"] = "IN_TRANSIT"
+            updates["departure_date"] = _required_date(payload, "departure_date") if "departure_date" not in errors else None
+        elif action == "confirm_arrival":
+            _require_date(errors, payload, "arrival_date")
+            _require_text(errors, payload, "receiving_officer", max_length=100)
+            _require_bool(errors, payload, "receiving_confirmation")
+            updates["arrival_date"] = _required_date(payload, "arrival_date") if "arrival_date" not in errors else None
+            updates["receiving_officer"] = _optional_string(payload.get("receiving_officer"))
+            updates["receiving_confirmation"] = _required_bool(payload, "receiving_confirmation") if "receiving_confirmation" not in errors else None
+        elif action == "complete":
+            _optional_text(errors, payload, "transfer_completion_notes")
+            updates["transfer_status"] = "COMPLETED"
+            updates["transfer_completion_notes"] = _optional_string(payload.get("transfer_completion_notes"))
+        elif action == "cancel":
+            _require_text(errors, payload, "reason")
+            updates["transfer_status"] = "CANCELLED"
+            updates["transfer_completion_notes"] = _required_string(payload, "reason") if "reason" not in errors else None
+        else:
+            errors["action"] = "Unsupported transfer action"
+        if errors:
+            raise InmateValidationError(errors)
+        return cls(updates={key: value for key, value in updates.items() if value is not None})
+
+
+@dataclass(frozen=True)
+class CreateReleaseRequestDTO:
+    inmate_id: int
+    release_type: str
+    release_reason: str
+    created_by: int
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any], *, actor_user_id: int) -> "CreateReleaseRequestDTO":
+        errors: dict[str, str] = {}
+        _require_int(errors, payload, "inmate_id")
+        _require_upper_enum(errors, payload, "release_type", INMATE_RELEASE_TYPES)
+        _require_text(errors, payload, "release_reason")
+        if errors:
+            raise InmateValidationError(errors)
+        return cls(
+            inmate_id=int(payload["inmate_id"]),
+            release_type=_required_string(payload, "release_type").upper(),
+            release_reason=_required_string(payload, "release_reason"),
+            created_by=actor_user_id,
+        )
+
+
+@dataclass(frozen=True)
+class ReleaseActionDTO:
+    updates: dict[str, Any]
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any], *, action: str, actor_user_id: int) -> "ReleaseActionDTO":
+        errors: dict[str, str] = {}
+        updates: dict[str, Any] = {}
+        if action == "legal_verification":
+            _require_bool(errors, payload, "legal_verified")
+            updates["legal_verified"] = _required_bool(payload, "legal_verified")
+            updates["release_status"] = "LEGAL_VERIFICATION"
+        elif action == "sentence_validation":
+            _require_bool(errors, payload, "sentence_validated")
+            updates["sentence_validated"] = _required_bool(payload, "sentence_validated")
+        elif action == "medical_clearance":
+            _require_bool(errors, payload, "medical_cleared")
+            _optional_text(errors, payload, "medical_discharge_summary")
+            updates["medical_cleared"] = _required_bool(payload, "medical_cleared")
+            updates["medical_discharge_summary"] = _optional_string(payload.get("medical_discharge_summary"))
+        elif action == "property_clearance":
+            _require_bool(errors, payload, "property_cleared")
+            _optional_text(errors, payload, "property_release_notes")
+            updates["property_cleared"] = _required_bool(payload, "property_cleared")
+            updates["property_release_notes"] = _optional_string(payload.get("property_release_notes"))
+        elif action == "identity_verification":
+            _require_bool(errors, payload, "identity_verified")
+            _require_text(errors, payload, "discharge_notes")
+            updates["identity_verified"] = _required_bool(payload, "identity_verified")
+            updates["discharge_notes"] = _optional_string(payload.get("discharge_notes"))
+        elif action == "approve":
+            updates["release_status"] = "APPROVED"
+            updates["approved_by"] = actor_user_id
+        elif action == "reject":
+            _require_text(errors, payload, "reason")
+            updates["release_status"] = "REJECTED"
+            updates["discharge_notes"] = _required_string(payload, "reason") if "reason" not in errors else None
+        elif action == "documents":
+            _require_text(errors, payload, "release_certificate_number", max_length=100)
+            _optional_text(errors, payload, "discharge_notes")
+            updates["release_certificate_number"] = _required_string(payload, "release_certificate_number") if "release_certificate_number" not in errors else None
+            updates["discharge_notes"] = _optional_string(payload.get("discharge_notes"))
+            updates["release_status"] = "READY_FOR_RELEASE"
+        elif action == "execute":
+            _require_date(errors, payload, "release_date")
+            _require_time(errors, payload, "release_time")
+            _optional_text(errors, payload, "discharge_notes")
+            updates["release_status"] = "RELEASED"
+            updates["release_date"] = _required_date(payload, "release_date") if "release_date" not in errors else None
+            updates["release_time"] = _required_time(payload, "release_time") if "release_time" not in errors else None
+            updates["discharge_notes"] = _optional_string(payload.get("discharge_notes"))
+        else:
+            errors["action"] = "Unsupported release action"
+        if errors:
+            raise InmateValidationError(errors)
+        return cls(updates={key: value for key, value in updates.items() if value is not None})
+
+
 def _validate_create_payload(errors: dict[str, str], payload: dict[str, Any]) -> None:
     for field, max_length in INMATE_REQUIRED_TEXT_FIELD_LENGTHS.items():
         _require_text(errors, payload, field, max_length=max_length)
@@ -246,14 +430,20 @@ def _validate_enum(errors: dict[str, str], payload: dict[str, Any], field: str, 
         errors[field] = f"Must be one of: {', '.join(sorted(allowed))}"
 
 
-def _require_text(errors: dict[str, str], payload: dict[str, Any], field: str, *, max_length: int) -> None:
+def _require_upper_enum(errors: dict[str, str], payload: dict[str, Any], field: str, allowed: set[str]) -> None:
+    value = payload.get(field)
+    if not isinstance(value, str) or value.strip().upper() not in allowed:
+        errors[field] = f"Must be one of: {', '.join(sorted(allowed))}"
+
+
+def _require_text(errors: dict[str, str], payload: dict[str, Any], field: str, *, max_length: int | None = None) -> None:
     _validate_required_text_value(errors, field, payload.get(field), max_length)
 
 
-def _validate_required_text_value(errors: dict[str, str], field: str, value: Any, max_length: int) -> None:
+def _validate_required_text_value(errors: dict[str, str], field: str, value: Any, max_length: int | None) -> None:
     if not isinstance(value, str) or not value.strip():
         errors[field] = "This field is required"
-    elif len(value.strip()) > max_length:
+    elif max_length is not None and len(value.strip()) > max_length:
         errors[field] = f"Must be at most {max_length} characters"
 
 
@@ -308,6 +498,26 @@ def _required_time_from_value(errors: dict[str, str], field: str, value: Any) ->
 
 def _require_int(errors: dict[str, str], payload: dict[str, Any], field: str) -> None:
     _required_int_from_value(errors, field, payload.get(field))
+
+
+def _require_bool(errors: dict[str, str], payload: dict[str, Any], field: str) -> None:
+    if _safe_bool(payload.get(field)) is None:
+        errors[field] = "Must be true or false"
+
+
+def _required_bool(payload: dict[str, Any], field: str) -> bool:
+    value = _safe_bool(payload.get(field))
+    if value is None:
+        raise ValueError(f"{field} must be true or false")
+    return value
+
+
+def _safe_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value.strip().lower() in {"true", "false"}:
+        return value.strip().lower() == "true"
+    return None
 
 
 def _required_int_from_value(errors: dict[str, str], field: str, value: Any) -> int | None:

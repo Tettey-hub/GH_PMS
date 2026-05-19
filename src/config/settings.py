@@ -191,6 +191,7 @@ class Settings:
     background_scheduler_timezone: str = _get_env("BACKGROUND_SCHEDULER_TIMEZONE", "UTC")
     background_job_max_attempts: int = _get_positive_int("BACKGROUND_JOB_MAX_ATTEMPTS", 3)
     background_job_retry_delay_seconds: int = _get_positive_int("BACKGROUND_JOB_RETRY_DELAY_SECONDS", 5)
+    medical_referral_facilities: list[str] = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "allowed_origins", _get_list("ALLOWED_ORIGINS"))
@@ -209,6 +210,14 @@ class Settings:
             _get_list("ALLOWED_DOC_TYPES", ["application/pdf", "image/jpeg", "image/png"]),
         )
         object.__setattr__(self, "maintenance_bypass_ips", _get_list("MAINTENANCE_BYPASS_IPS", ["127.0.0.1", "localhost"]))
+        object.__setattr__(
+            self,
+            "medical_referral_facilities",
+            _get_list(
+                "MEDICAL_REFERRAL_FACILITIES",
+                ["Nsawam Prison Hospital", "Korle Bu Teaching Hospital", "Komfo Anokye Teaching Hospital"],
+            ),
+        )
         
         # Validate DEBUG mode not enabled in production
         _validate_debug_mode(self.app_env, self.debug)

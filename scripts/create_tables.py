@@ -21,6 +21,7 @@ AUDIT_LOGS_SCHEMA_FILE = SCHEMA_DIR / "audit_logs.sql"
 PERMISSIONS_SCHEMA_FILE = SCHEMA_DIR / "permissions.sql"
 ARREST_WARRANTS_SCHEMA_FILE = SCHEMA_DIR / "arrest_warrants.sql"
 INMATES_SCHEMA_FILE = SCHEMA_DIR / "inmates.sql"
+MEDICAL_SCHEMA_FILE = SCHEMA_DIR / "medical.sql"
 
 
 TARGET_USER_COLUMNS = {
@@ -189,6 +190,7 @@ def create_tables() -> None:
     permissions_sql = _read_schema_sql(PERMISSIONS_SCHEMA_FILE)
     arrest_warrants_sql = _read_schema_sql(ARREST_WARRANTS_SCHEMA_FILE)
     inmates_sql = _read_schema_sql(INMATES_SCHEMA_FILE)
+    medical_sql = _read_schema_sql(MEDICAL_SCHEMA_FILE)
 
     with db_connection() as connection:
         cursor = connection.cursor()
@@ -200,6 +202,8 @@ def create_tables() -> None:
         _execute_schema_statements(cursor, permissions_sql)
         _ensure_arrest_warrants_table(cursor, arrest_warrants_sql)
         _ensure_inmates_table(cursor, inmates_sql)
+        _ensure_inmate_workflow_tables(cursor, inmates_sql)
+        _ensure_medical_tables(cursor, medical_sql)
         connection.commit()
         cursor.close()
 
@@ -358,6 +362,22 @@ def _ensure_inmates_table(cursor, inmates_sql: str) -> None:
         "Existing inmates table does not match the required inmate schema. "
         f"Missing columns: {', '.join(missing_columns)}"
     )
+
+
+def _ensure_medical_tables(cursor, medical_sql: str) -> None:
+    if not _table_exists(cursor, "inmates"):
+        raise RuntimeError("Cannot create medical tables because inmates table does not exist.")
+    if not _table_exists(cursor, "users"):
+        raise RuntimeError("Cannot create medical tables because users table does not exist.")
+    _execute_schema_statements(cursor, medical_sql)
+
+
+def _ensure_inmate_workflow_tables(cursor, inmates_sql: str) -> None:
+    if not _table_exists(cursor, "inmates"):
+        raise RuntimeError("Cannot create inmate workflow tables because inmates table does not exist.")
+    if not _table_exists(cursor, "users"):
+        raise RuntimeError("Cannot create inmate workflow tables because users table does not exist.")
+    _execute_schema_statements(cursor, inmates_sql)
 
 
 def _table_exists(cursor, table_name: str) -> bool:

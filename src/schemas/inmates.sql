@@ -72,3 +72,102 @@ CREATE TABLE IF NOT EXISTS inmates (
     INDEX idx_inmates_arrest_date (arrest_date),
     INDEX idx_inmates_admission_officer_id (admission_officer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS inmate_transfers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inmate_id INT NOT NULL,
+    current_facility VARCHAR(150) NOT NULL,
+    destination_facility VARCHAR(150) NOT NULL,
+    transfer_type VARCHAR(40) NOT NULL,
+    reason TEXT NOT NULL,
+    security_level VARCHAR(50) NOT NULL,
+    medical_clearance BOOLEAN NOT NULL DEFAULT FALSE,
+    legal_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    security_assessed BOOLEAN NOT NULL DEFAULT FALSE,
+    transfer_status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    urgency_level VARCHAR(30) NOT NULL,
+    requested_date DATE NOT NULL,
+    departure_date DATE NULL,
+    arrival_date DATE NULL,
+    escort_officers TEXT NULL,
+    transport_vehicle VARCHAR(100) NULL,
+    route_details TEXT NULL,
+    movement_authorized_by INT NULL,
+    approved_by INT NULL,
+    receiving_officer VARCHAR(100) NULL,
+    receiving_confirmation BOOLEAN NOT NULL DEFAULT FALSE,
+    transfer_completion_notes TEXT NULL,
+    created_by INT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_inmate_transfers_inmate_id
+        FOREIGN KEY (inmate_id) REFERENCES inmates(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_inmate_transfers_movement_authorized_by
+        FOREIGN KEY (movement_authorized_by) REFERENCES users(id)
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_inmate_transfers_approved_by
+        FOREIGN KEY (approved_by) REFERENCES users(id)
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_inmate_transfers_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE RESTRICT,
+    CONSTRAINT chk_inmate_transfers_type CHECK (transfer_type IN ('INTERNAL_TRANSFER', 'INTER_PRISON_TRANSFER', 'MEDICAL_TRANSFER', 'COURT_TRANSFER', 'REHABILITATION_TRANSFER', 'EMERGENCY_TRANSFER')),
+    CONSTRAINT chk_inmate_transfers_status CHECK (transfer_status IN ('PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'IN_TRANSIT', 'COMPLETED', 'CANCELLED')),
+    CONSTRAINT chk_inmate_transfers_dates CHECK (
+        (departure_date IS NULL OR departure_date >= requested_date)
+        AND (arrival_date IS NULL OR departure_date IS NOT NULL)
+        AND (arrival_date IS NULL OR arrival_date >= departure_date)
+    ),
+    INDEX idx_inmate_transfers_inmate_id (inmate_id),
+    INDEX idx_inmate_transfers_type (transfer_type),
+    INDEX idx_inmate_transfers_status (transfer_status),
+    INDEX idx_inmate_transfers_current_facility (current_facility),
+    INDEX idx_inmate_transfers_destination_facility (destination_facility),
+    INDEX idx_inmate_transfers_requested_date (requested_date),
+    INDEX idx_inmate_transfers_departure_date (departure_date),
+    INDEX idx_inmate_transfers_arrival_date (arrival_date),
+    INDEX idx_inmate_transfers_approved_by (approved_by),
+    INDEX idx_inmate_transfers_created_by (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS inmate_releases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inmate_id INT NOT NULL,
+    release_type VARCHAR(40) NOT NULL,
+    release_reason TEXT NOT NULL,
+    sentence_validated BOOLEAN NOT NULL DEFAULT FALSE,
+    legal_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    medical_cleared BOOLEAN NOT NULL DEFAULT FALSE,
+    property_cleared BOOLEAN NOT NULL DEFAULT FALSE,
+    identity_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    release_certificate_number VARCHAR(100) NULL,
+    approved_by INT NULL,
+    release_date DATE NULL,
+    release_time TIME NULL,
+    release_status VARCHAR(30) NOT NULL DEFAULT 'PENDING_REVIEW',
+    discharge_notes TEXT NULL,
+    property_release_notes TEXT NULL,
+    medical_discharge_summary TEXT NULL,
+    created_by INT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_inmate_releases_inmate_id
+        FOREIGN KEY (inmate_id) REFERENCES inmates(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_inmate_releases_approved_by
+        FOREIGN KEY (approved_by) REFERENCES users(id)
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_inmate_releases_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE RESTRICT,
+    CONSTRAINT chk_inmate_releases_type CHECK (release_type IN ('SENTENCE_COMPLETION', 'BAIL_RELEASE', 'PAROLE', 'PRESIDENTIAL_PARDON', 'MEDICAL_RELEASE', 'COURT_ACQUITTAL')),
+    CONSTRAINT chk_inmate_releases_status CHECK (release_status IN ('PENDING_REVIEW', 'LEGAL_VERIFICATION', 'APPROVED', 'REJECTED', 'READY_FOR_RELEASE', 'RELEASED')),
+    INDEX idx_inmate_releases_inmate_id (inmate_id),
+    INDEX idx_inmate_releases_type (release_type),
+    INDEX idx_inmate_releases_status (release_status),
+    INDEX idx_inmate_releases_release_date (release_date),
+    INDEX idx_inmate_releases_approved_by (approved_by),
+    INDEX idx_inmate_releases_created_by (created_by),
+    INDEX idx_inmate_releases_certificate (release_certificate_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
