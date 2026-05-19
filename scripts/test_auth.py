@@ -65,11 +65,7 @@ def main() -> int:
                 "Generate legal reports",
             ])
         elif choice == "5":
-            show_coming_soon_menu("Medical Management", [
-                "View medical records",
-                "Access medical reports",
-                "Monitor prison health statistics",
-            ])
+            show_medical_management_menu()
         elif choice == "6":
             show_coming_soon_menu("Visitor Management", [
                 "Approve/reject visitor requests",
@@ -77,12 +73,7 @@ def main() -> int:
                 "Blacklist visitors",
             ])
         elif choice == "7":
-            show_coming_soon_menu("Housing and Movement Management", [
-                "Manage prison blocks",
-                "Assign inmate housing",
-                "Approve inmate transfers",
-                "Monitor occupancy levels",
-            ])
+            show_housing_and_movement_menu()
         elif choice == "8":
             show_coming_soon_menu("Rehabilitation Management", [
                 "Vocational training registration",
@@ -176,6 +167,117 @@ def show_coming_soon_menu(title: str, actions: list[str]) -> None:
             return
         if choice.isdigit() and 1 <= int(choice) <= len(actions):
             print(f"{Fore.YELLOW}{actions[int(choice) - 1]}:{Style.RESET_ALL} Coming soon.")
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def show_medical_management_menu() -> None:
+    sections = [
+        ("Medical Registration", [
+            "Create inmate medical profile",
+            "Record allergies",
+            "Chronic illness tracking",
+        ]),
+        ("Medical Screening", [
+            "Admission medical checks",
+            "Disease screening",
+            "Drug screening",
+        ]),
+        ("Treatment Management", [
+            "Diagnosis records",
+            "Treatment plans",
+            "Medical prescriptions",
+        ]),
+        ("Medication Management", [
+            "Medication schedules",
+            "Drug inventory",
+            "Medication administration tracking",
+        ]),
+        ("Appointment Scheduling", [
+            "Doctor appointments",
+            "Specialist referrals",
+            "Emergency treatment scheduling",
+        ]),
+        ("Mental Health Management", [
+            "Psychological assessment",
+            "Counseling records",
+            "Suicide-risk monitoring",
+        ]),
+        ("Medical Reports", [
+            "Health statistics",
+            "Disease outbreak reports",
+            "Medical treatment reports",
+        ]),
+    ]
+
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Medical Management{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Manages inmate health records and healthcare services.{Style.RESET_ALL}")
+        for index, (section_title, _) in enumerate(sections, start=1):
+            print(f"{Fore.YELLOW}{index}.{Style.RESET_ALL} {section_title}")
+        print(f"{Fore.YELLOW}{len(sections) + 1}.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == str(len(sections) + 1):
+            return
+        if choice.isdigit() and 1 <= int(choice) <= len(sections):
+            section_title, actions = sections[int(choice) - 1]
+            show_coming_soon_menu(section_title, actions)
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def show_housing_and_movement_menu() -> None:
+    sections = [
+        ("Block Management", [
+            "Create prison blocks",
+            "Block categorization",
+            "Security-level assignment",
+        ]),
+        ("Cell Management", [
+            "Create cells",
+            "Cell capacity definition",
+            "Cell condition tracking",
+        ]),
+        ("Bed Allocation", [
+            "Assign beds",
+            "Bed occupancy tracking",
+            "Bed reassignment",
+        ]),
+        ("Inmate Housing", [
+            "Assign inmate to cell",
+            "Transfer inmate between cells",
+            "Isolation housing",
+        ]),
+        ("Occupancy Monitoring", [
+            "Available spaces",
+            "Monitor occupancy",
+        ]),
+        ("Special Housing", [
+            "High-risk inmates",
+            "Medical isolation",
+            "Juvenile segregation",
+        ]),
+        ("Housing Reports", [
+            "Occupancy reports",
+            "Housing transfer reports",
+            "Overcrowding reports",
+        ]),
+    ]
+
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Housing and Movement Management{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Handles prison accommodation allocation and occupancy monitoring.{Style.RESET_ALL}")
+        for index, (section_title, _) in enumerate(sections, start=1):
+            print(f"{Fore.YELLOW}{index}.{Style.RESET_ALL} {section_title}")
+        print(f"{Fore.YELLOW}{len(sections) + 1}.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == str(len(sections) + 1):
+            return
+        if choice.isdigit() and 1 <= int(choice) <= len(sections):
+            section_title, actions = sections[int(choice) - 1]
+            show_coming_soon_menu(section_title, actions)
         else:
             print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
 
