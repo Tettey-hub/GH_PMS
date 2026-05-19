@@ -106,7 +106,7 @@ class Settings:
     mysql_user: str = _get_env("MYSQL_USER", "root")
     mysql_password: str = _get_env("MYSQL_PASSWORD", "")
     mysql_database: str = _get_env("MYSQL_DATABASE", "pms_db")
-    mysql_ssl_disabled: bool = _get_bool("MYSQL_SSL_DISABLED", True)
+    mysql_ssl_disabled: bool = _get_bool("MYSQL_SSL_DISABLED", False)
     database_url: str = _get_env("DATABASE_URL", _build_mysql_database_url())
     db_pool_size: int = _get_positive_int("DB_POOL_SIZE", 20)
     database_connection_timeout: int = _get_positive_int("DATABASE_CONNECTION_TIMEOUT", 30)
