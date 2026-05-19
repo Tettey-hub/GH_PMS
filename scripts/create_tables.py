@@ -19,6 +19,8 @@ RATE_LIMITS_SCHEMA_FILE = SCHEMA_DIR / "rate_limits.sql"
 AUTH_ACCOUNT_LOCKOUTS_SCHEMA_FILE = SCHEMA_DIR / "auth_account_lockouts.sql"
 AUDIT_LOGS_SCHEMA_FILE = SCHEMA_DIR / "audit_logs.sql"
 PERMISSIONS_SCHEMA_FILE = SCHEMA_DIR / "permissions.sql"
+ARREST_WARRANTS_SCHEMA_FILE = SCHEMA_DIR / "arrest_warrants.sql"
+INMATES_SCHEMA_FILE = SCHEMA_DIR / "inmates.sql"
 
 
 TARGET_USER_COLUMNS = {
@@ -91,6 +93,80 @@ TARGET_AUDIT_LOG_COLUMNS = {
     "created_at",
 }
 
+TARGET_ARREST_WARRANT_COLUMNS = {
+    "id",
+    "warrant_number",
+    "case_number",
+    "first_name",
+    "last_name",
+    "other_names",
+    "date_of_birth",
+    "gender",
+    "nationality",
+    "national_id",
+    "offense",
+    "offense_description",
+    "arrest_date",
+    "arresting_officer",
+    "arresting_agency",
+    "court",
+    "judge",
+    "sentence_type",
+    "sentence_duration",
+    "status",
+    "issued_date",
+    "created_at",
+    "updated_at",
+}
+
+TARGET_INMATE_COLUMNS = {
+    "id",
+    "inmate_id",
+    "warrant_id",
+    "first_name",
+    "last_name",
+    "other_names",
+    "date_of_birth",
+    "age",
+    "gender",
+    "nationality",
+    "national_id",
+    "phone",
+    "address",
+    "marital_status",
+    "photo",
+    "fingerprint_id",
+    "height_cm",
+    "weight_kg",
+    "eye_color",
+    "hair_color",
+    "distinguishing_marks",
+    "religion",
+    "occupation",
+    "education_level",
+    "next_of_kin_name",
+    "next_of_kin_relation",
+    "next_of_kin_contact",
+    "next_of_kin_address",
+    "case_number",
+    "offense",
+    "offense_description",
+    "arrest_date",
+    "arresting_officer",
+    "arresting_agency",
+    "court",
+    "judge",
+    "sentence_type",
+    "sentence_duration",
+    "expected_release_date",
+    "status",
+    "admission_date",
+    "admission_time",
+    "admission_officer_id",
+    "created_at",
+    "updated_at",
+}
+
 LEGACY_USER_COLUMNS = {
     "id",
     "username",
@@ -111,6 +187,8 @@ def create_tables() -> None:
     auth_account_lockouts_sql = _read_schema_sql(AUTH_ACCOUNT_LOCKOUTS_SCHEMA_FILE)
     audit_logs_sql = _read_schema_sql(AUDIT_LOGS_SCHEMA_FILE)
     permissions_sql = _read_schema_sql(PERMISSIONS_SCHEMA_FILE)
+    arrest_warrants_sql = _read_schema_sql(ARREST_WARRANTS_SCHEMA_FILE)
+    inmates_sql = _read_schema_sql(INMATES_SCHEMA_FILE)
 
     with db_connection() as connection:
         cursor = connection.cursor()
@@ -120,6 +198,8 @@ def create_tables() -> None:
         cursor.execute(auth_account_lockouts_sql)
         _ensure_audit_logs_table(cursor, audit_logs_sql)
         _execute_schema_statements(cursor, permissions_sql)
+        _ensure_arrest_warrants_table(cursor, arrest_warrants_sql)
+        _ensure_inmates_table(cursor, inmates_sql)
         connection.commit()
         cursor.close()
 
@@ -243,6 +323,54 @@ def _ensure_audit_logs_table(cursor, audit_logs_sql: str) -> None:
     cursor.execute(f"RENAME TABLE audit_logs TO {backup_table}")
     cursor.execute(audit_logs_sql)
     print(f"Legacy audit_logs table backed up as {backup_table}.")
+
+
+def _ensure_arrest_warrants_table(cursor, arrest_warrants_sql: str) -> None:
+    existing_columns = _get_table_columns(cursor, "arrest_warrants")
+    if not existing_columns:
+        cursor.execute(arrest_warrants_sql)
+        return
+
+    if TARGET_ARREST_WARRANT_COLUMNS.issubset(existing_columns):
+        return
+
+    missing_columns = sorted(TARGET_ARREST_WARRANT_COLUMNS - existing_columns)
+    raise RuntimeError(
+        "Existing arrest_warrants table does not match the required arrest warrant schema. "
+        f"Missing columns: {', '.join(missing_columns)}"
+    )
+
+
+def _ensure_inmates_table(cursor, inmates_sql: str) -> None:
+    if not _table_exists(cursor, "arrest_warrants"):
+        raise RuntimeError("Cannot create inmates table because arrest_warrants table does not exist.")
+
+    existing_columns = _get_table_columns(cursor, "inmates")
+    if not existing_columns:
+        cursor.execute(inmates_sql)
+        return
+
+    if TARGET_INMATE_COLUMNS.issubset(existing_columns):
+        return
+
+    missing_columns = sorted(TARGET_INMATE_COLUMNS - existing_columns)
+    raise RuntimeError(
+        "Existing inmates table does not match the required inmate schema. "
+        f"Missing columns: {', '.join(missing_columns)}"
+    )
+
+
+def _table_exists(cursor, table_name: str) -> bool:
+    cursor.execute(
+        """
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = DATABASE() AND table_name = %s
+        LIMIT 1
+        """,
+        (table_name,),
+    )
+    return cursor.fetchone() is not None
 
 
 def _migrate_legacy_users_table(connection, cursor, users_table_sql: str) -> None:

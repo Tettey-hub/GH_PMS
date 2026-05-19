@@ -13,6 +13,18 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from main import app
+from src.models.arrest_warrant import (
+    ARREST_WARRANT_GENDERS,
+    ARREST_WARRANT_SENTENCE_TYPES,
+    ARREST_WARRANT_STATUSES,
+)
+from src.models.inmate import (
+    INMATE_GENDERS,
+    INMATE_MARITAL_STATUSES,
+    INMATE_NEXT_OF_KIN_RELATIONS,
+    INMATE_SENTENCE_TYPES,
+    INMATE_STATUSES,
+)
 
 
 def main() -> int:
@@ -41,16 +53,10 @@ def main() -> int:
         elif choice == "1":
             manage_users(client, access_token)
         elif choice == "2":
-            show_coming_soon_menu("Inmate Management", [
-                "Register inmates",
-                "View all inmates",
-                "Edit inmate records",
-                "Delete inmate records",
-                "View inmate profiles",
-                "Approve inmate transfers",
-                "Approve inmate releases",
-            ])
+            manage_inmates(client, access_token)
         elif choice == "3":
+            manage_arrest_warrants(client, access_token)
+        elif choice == "4":
             show_coming_soon_menu("Court and Sentence Management", [
                 "Create court records",
                 "Edit sentence records",
@@ -58,33 +64,65 @@ def main() -> int:
                 "Access legal documents",
                 "Generate legal reports",
             ])
-        elif choice == "4":
+        elif choice == "5":
             show_coming_soon_menu("Medical Management", [
                 "View medical records",
                 "Access medical reports",
                 "Monitor prison health statistics",
             ])
-        elif choice == "5":
+        elif choice == "6":
             show_coming_soon_menu("Visitor Management", [
                 "Approve/reject visitor requests",
                 "View visitor logs",
                 "Blacklist visitors",
             ])
-        elif choice == "6":
+        elif choice == "7":
             show_coming_soon_menu("Housing and Movement Management", [
                 "Manage prison blocks",
                 "Assign inmate housing",
                 "Approve inmate transfers",
                 "Monitor occupancy levels",
             ])
-        elif choice == "7":
+        elif choice == "8":
+            show_coming_soon_menu("Rehabilitation Management", [
+                "Vocational training registration",
+                "Educational program tracking",
+                "Counseling sessions",
+                "Behavioral improvement tracking",
+                "Religious participation",
+                "Work assignments",
+                "Skill certification",
+                "Post-release follow-up",
+                "Rehabilitation reports",
+            ])
+        elif choice == "9":
+            show_coming_soon_menu("Notifications", [
+                "Email alerts",
+                "Visit reminders",
+                "Court reminders",
+                "Medical alerts",
+                "Security alerts",
+                "Transfer alerts",
+                "Emergency notifications",
+            ])
+        elif choice == "10":
+            show_coming_soon_menu("External Integration Management", [
+                "Court system integration",
+                "National ID integration",
+                "Police database integration",
+                "Biometric integration",
+                "API management",
+                "Data synchronization",
+                "Cloud backup integration",
+            ])
+        elif choice == "11":
             show_coming_soon_menu("Reporting and Analytics", [
                 "Generate reports",
                 "Access analytics dashboard",
                 "Export reports",
                 "View prison statistics",
             ])
-        elif choice == "8":
+        elif choice == "12":
             show_coming_soon_menu("System Administration", [
                 "Configure system settings",
                 "Manage roles",
@@ -92,9 +130,9 @@ def main() -> int:
                 "Manage backups",
                 "Monitor system activities",
             ])
-        elif choice == "9":
+        elif choice == "13":
             access_token, refresh_token, current_user = logout(client, access_token, refresh_token, current_user)
-        elif choice == "10":
+        elif choice == "14":
             print(f"{Fore.CYAN}Goodbye.{Style.RESET_ALL}")
             return 0
         else:
@@ -112,14 +150,18 @@ def print_logged_in_menu(current_user: dict) -> None:
     print(f"\n{Fore.CYAN}{Style.BRIGHT}{active_name}{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Manage Users")
     print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Inmate Management")
-    print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Court and Sentence Management")
-    print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Medical Management")
-    print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Visitor Management")
-    print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Housing and Movement Management")
-    print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Reporting and Analytics")
-    print(f"{Fore.YELLOW}8.{Style.RESET_ALL} System Administration")
-    print(f"{Fore.YELLOW}9.{Style.RESET_ALL} Log Out")
-    print(f"{Fore.YELLOW}10.{Style.RESET_ALL} Exit")
+    print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Manage Warrant")
+    print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Court and Sentence Management")
+    print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Medical Management")
+    print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Visitor Management")
+    print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Housing and Movement Management")
+    print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Rehabilitation Management")
+    print(f"{Fore.YELLOW}9.{Style.RESET_ALL} Notifications")
+    print(f"{Fore.YELLOW}10.{Style.RESET_ALL} External Integration Management")
+    print(f"{Fore.YELLOW}11.{Style.RESET_ALL} Reporting and Analytics")
+    print(f"{Fore.YELLOW}12.{Style.RESET_ALL} System Administration")
+    print(f"{Fore.YELLOW}13.{Style.RESET_ALL} Log Out")
+    print(f"{Fore.YELLOW}14.{Style.RESET_ALL} Exit")
 
 
 def show_coming_soon_menu(title: str, actions: list[str]) -> None:
@@ -206,6 +248,39 @@ def manage_users(client, access_token: str | None) -> None:
 
     while True:
         print(f"\n{Fore.CYAN}{Style.BRIGHT}Manage Users{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Admin Users")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Duty Scheduling")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Attendance Tracking")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Leave Management")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Performance Evaluation")
+        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Staff Disciplinary Records")
+        print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Staff Training")
+        print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            manage_admin_users(client, access_token)
+        elif choice == "2":
+            print(f"{Fore.YELLOW}Duty Scheduling:{Style.RESET_ALL} Coming soon.")
+        elif choice == "3":
+            print(f"{Fore.YELLOW}Attendance Tracking:{Style.RESET_ALL} Coming soon.")
+        elif choice == "4":
+            print(f"{Fore.YELLOW}Leave Management:{Style.RESET_ALL} Coming soon.")
+        elif choice == "5":
+            print(f"{Fore.YELLOW}Performance Evaluation:{Style.RESET_ALL} Coming soon.")
+        elif choice == "6":
+            print(f"{Fore.YELLOW}Staff Disciplinary Records:{Style.RESET_ALL} Coming soon.")
+        elif choice == "7":
+            print(f"{Fore.YELLOW}Staff Training:{Style.RESET_ALL} Coming soon.")
+        elif choice == "8":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_admin_users(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Admin Users{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Add Admin")
         print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View All Staffs")
         print(f"{Fore.YELLOW}3.{Style.RESET_ALL} View Specific Staff")
@@ -426,6 +501,791 @@ def set_staff_account_status(client, access_token: str) -> None:
     print(f"{Fore.GREEN}Account status updated:{Style.RESET_ALL} {user.get('full_name')} -> {user.get('status')}")
 
 
+def manage_arrest_warrants(client, access_token: str | None) -> None:
+    if not access_token:
+        print(f"{Fore.YELLOW}Login before managing arrest warrants.{Style.RESET_ALL}")
+        return
+
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Manage Warrant{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} View all warrants")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View warrant by")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Edit Warrant")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Delete warrant")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            show_all_warrants(client, access_token)
+        elif choice == "2":
+            show_warrants_by_filter(client, access_token)
+        elif choice == "3":
+            edit_warrant(client, access_token)
+        elif choice == "4":
+            delete_warrant(client, access_token)
+        elif choice == "5":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def show_all_warrants(client, access_token: str) -> None:
+    query = view_all_warrants_gender_filter()
+    response = client.get(
+        "/api/v1/arrest-warrants",
+        query_string=query,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Failed to load warrants", body)
+        return
+    print_selected_warrant_filter(query)
+    print_warrant_table(body)
+
+
+def show_warrants_by_filter(client, access_token: str) -> None:
+    query = view_warrant_by_filter()
+    response = client.get(
+        "/api/v1/arrest-warrants",
+        query_string=query,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Failed to load warrants", body)
+        return
+    print_selected_warrant_filter(query)
+    print_warrant_table(body)
+
+
+def show_warrant_by_id(client, access_token: str) -> None:
+    warrant_db_id = prompt_required_int("Warrant database ID")
+    response = client.get(
+        f"/api/v1/arrest-warrants/{warrant_db_id}",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Failed to load warrant", body)
+        return
+    warrant = body.get("arrest_warrant")
+    if not isinstance(warrant, dict):
+        print(f"{Fore.RED}Failed to load warrant:{Style.RESET_ALL} invalid response.")
+        return
+    print_warrant_details(warrant)
+
+
+def edit_warrant(client, access_token: str) -> None:
+    warrant_db_id = prompt_required_int("Warrant database ID")
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Edit Warrant{Style.RESET_ALL}")
+    print(f"{Fore.YELLOW}Leave a field blank to keep its current value.{Style.RESET_ALL}")
+    updates = clean_payload({
+        "warrant_number": prompt_optional("Warrant number"),
+        "case_number": prompt_optional("Case number"),
+        "first_name": prompt_optional("First name"),
+        "last_name": prompt_optional("Last name"),
+        "other_names": prompt_optional("Other names"),
+        "date_of_birth": prompt_optional("Date of birth (YYYY-MM-DD)"),
+        "gender": prompt_optional_choice("Gender", sorted(ARREST_WARRANT_GENDERS)),
+        "nationality": prompt_optional("Nationality"),
+        "national_id": prompt_optional("National ID"),
+        "offense": prompt_optional("Offense"),
+        "offense_description": prompt_optional("Offense description"),
+        "arrest_date": prompt_optional("Arrest date (YYYY-MM-DD)"),
+        "arresting_officer": prompt_optional("Arresting officer"),
+        "arresting_agency": prompt_optional("Arresting agency"),
+        "court": prompt_optional("Court"),
+        "judge": prompt_optional("Judge"),
+        "sentence_type": prompt_optional_choice("Sentence type", sorted(ARREST_WARRANT_SENTENCE_TYPES)),
+        "sentence_duration": prompt_optional("Sentence duration"),
+        "status": prompt_optional_choice("Status", sorted(ARREST_WARRANT_STATUSES)),
+        "issued_date": prompt_optional("Issued date (YYYY-MM-DD)"),
+    })
+    if not updates:
+        print(f"{Fore.YELLOW}No changes entered.{Style.RESET_ALL}")
+        return
+
+    response = client.patch(
+        f"/api/v1/arrest-warrants/{warrant_db_id}",
+        json=updates,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Warrant update failed", body)
+        return
+
+    warrant = body.get("arrest_warrant")
+    if not isinstance(warrant, dict):
+        print(f"{Fore.RED}Warrant update failed:{Style.RESET_ALL} invalid response.")
+        return
+    print(f"{Fore.GREEN}Warrant updated:{Style.RESET_ALL} {warrant.get('warrant_number')} ({warrant.get('case_number')})")
+    print_warrant_details(warrant)
+
+
+def delete_warrant(client, access_token: str) -> None:
+    warrant_db_id = prompt_required_int("Warrant database ID")
+    confirm = input(f"{Fore.RED}Type DELETE to confirm warrant deletion:{Style.RESET_ALL} ").strip()
+    if confirm != "DELETE":
+        print(f"{Fore.YELLOW}Delete cancelled.{Style.RESET_ALL}")
+        return
+
+    response = client.delete(
+        f"/api/v1/arrest-warrants/{warrant_db_id}",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Delete failed", body)
+        return
+    warrant = body.get("arrest_warrant", {})
+    print(f"{Fore.GREEN}Warrant deleted:{Style.RESET_ALL} {warrant.get('warrant_number')} ({warrant.get('case_number')})")
+
+
+def optional_warrant_filters() -> dict[str, object]:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Optional Warrant Filters{Style.RESET_ALL}")
+    return clean_payload({
+        "gender": prompt_optional_choice("Gender", sorted(ARREST_WARRANT_GENDERS)),
+        "nationality": prompt_optional("Nationality"),
+        "arrest_date": prompt_optional("Arrest date (YYYY-MM-DD)"),
+        "issued_date": prompt_optional("Issued date (YYYY-MM-DD)"),
+        "status": prompt_optional_choice("Status", sorted(ARREST_WARRANT_STATUSES)),
+        "sentence_type": prompt_optional_choice("Sentence type", sorted(ARREST_WARRANT_SENTENCE_TYPES)),
+        "limit": prompt_optional_int("Limit"),
+        "offset": prompt_optional_int("Offset"),
+    })
+
+
+def view_all_warrants_gender_filter() -> dict[str, object]:
+    return _select_filter_option(
+        "View all warrants",
+        [
+            ("female", {"gender": "female"}),
+            ("male", {"gender": "male"}),
+        ],
+    )
+
+
+def view_warrant_by_filter() -> dict[str, object]:
+    query: dict[str, object] = {}
+
+    gender_filter = _select_filter_option(
+        "View warrant by",
+        [
+            ("female", {"gender": "female"}),
+            ("male", {"gender": "male"}),
+        ],
+    )
+    if not gender_filter:
+        return query
+    query.update(gender_filter)
+
+    second_filter = _select_filter_option(
+        "Filter By",
+        [
+            ("pending", {"status": "pending"}),
+            ("executed", {"status": "executed"}),
+            ("cancelled", {"status": "cancelled"}),
+            ("convicted", {"sentence_type": "convicted"}),
+            ("death", {"sentence_type": "death"}),
+            ("life", {"sentence_type": "life"}),
+            ("remand", {"sentence_type": "remand"}),
+        ],
+    )
+    query.update(second_filter)
+    return query
+
+
+def print_selected_warrant_filter(query: dict[str, object]) -> None:
+    if not query:
+        print(f"{Fore.GREEN}Showing all warrants.{Style.RESET_ALL}")
+        return
+    labels = []
+    for field, value in query.items():
+        label = "Status" if field == "status" else "Sentence Type" if field == "sentence_type" else "Gender"
+        labels.append(f"{label}: {value}")
+    print(f"{Fore.GREEN}Showing warrants by {Style.RESET_ALL}{', '.join(labels)}")
+
+
+def print_warrant_table(body: dict) -> None:
+    warrants = body.get("arrest_warrants")
+    if not isinstance(warrants, list):
+        print(f"{Fore.RED}Failed to load warrants:{Style.RESET_ALL} invalid response.")
+        return
+    if not warrants:
+        print(f"{Fore.YELLOW}No warrants found.{Style.RESET_ALL}")
+        return
+
+    rows = []
+    for warrant in warrants:
+        if not isinstance(warrant, dict):
+            continue
+        rows.append([
+            warrant.get("id"),
+            warrant.get("warrant_number") or "",
+            warrant.get("case_number") or "",
+            f"{warrant.get('first_name') or ''} {warrant.get('last_name') or ''}".strip(),
+            warrant.get("offense") or "",
+            warrant.get("status") or "",
+            warrant.get("sentence_type") or "",
+            warrant.get("issued_date") or "",
+        ])
+
+    print(f"\n{Fore.GREEN}Arrest Warrants ({body.get('total', len(rows))}){Style.RESET_ALL}")
+    print(tabulate(
+        rows,
+        headers=["ID", "Warrant Number", "Case Number", "Name", "Offense", "Status", "Sentence Type", "Issued Date"],
+        tablefmt="grid",
+    ))
+
+
+def print_warrant_details(warrant: dict) -> None:
+    rows = [
+        ["Database ID", warrant.get("id")],
+        ["Warrant Number", warrant.get("warrant_number")],
+        ["Case Number", warrant.get("case_number")],
+        ["Name", f"{warrant.get('first_name') or ''} {warrant.get('last_name') or ''}".strip()],
+        ["Other Names", warrant.get("other_names")],
+        ["Date of Birth", warrant.get("date_of_birth")],
+        ["Gender", warrant.get("gender")],
+        ["Nationality", warrant.get("nationality")],
+        ["National ID", warrant.get("national_id")],
+        ["Offense", warrant.get("offense")],
+        ["Offense Description", warrant.get("offense_description")],
+        ["Arrest Date", warrant.get("arrest_date")],
+        ["Arresting Officer", warrant.get("arresting_officer")],
+        ["Arresting Agency", warrant.get("arresting_agency")],
+        ["Court", warrant.get("court")],
+        ["Judge", warrant.get("judge")],
+        ["Sentence Type", warrant.get("sentence_type")],
+        ["Sentence Duration", warrant.get("sentence_duration")],
+        ["Status", warrant.get("status")],
+        ["Issued Date", warrant.get("issued_date")],
+        ["Created At", warrant.get("created_at")],
+        ["Updated At", warrant.get("updated_at")],
+    ]
+    print(tabulate(rows, headers=["Field", "Value"], tablefmt="grid"))
+
+
+def manage_inmates(client, access_token: str | None) -> None:
+    if not access_token:
+        print(f"{Fore.YELLOW}Login before managing inmates.{Style.RESET_ALL}")
+        return
+
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Inmate Management{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Admit inmates")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View all inmates")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Edit inmate records")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Delete inmate records")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} View inmate profiles")
+        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Search inmates")
+        print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Update inmate status")
+        print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Approve inmate transfers")
+        print(f"{Fore.YELLOW}9.{Style.RESET_ALL} Approve inmate releases")
+        print(f"{Fore.YELLOW}10.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            admit_inmate(client, access_token)
+        elif choice == "2":
+            show_all_inmates(client, access_token)
+        elif choice == "3":
+            update_inmate_record(client, access_token)
+        elif choice == "4":
+            delete_inmate_record(client, access_token)
+        elif choice == "5":
+            show_inmate_profile(client, access_token)
+        elif choice == "6":
+            search_inmates(client, access_token)
+        elif choice == "7":
+            set_inmate_status(client, access_token)
+        elif choice == "8":
+            approve_inmate_transfer(client, access_token)
+        elif choice == "9":
+            approve_inmate_release(client, access_token)
+        elif choice == "10":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def admit_inmate(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Admit inmates{Style.RESET_ALL}")
+
+    print_section("Identification")
+    inmate_id = prompt_required("Inmate ID")
+    warrant_id = prompt_required_int("Arrest warrant ID")
+    case_number = prompt_required("Case number")
+    fingerprint_id = prompt_optional("Fingerprint ID")
+    photo = prompt_optional("Photo path")
+
+    print_section("Personal Information")
+    first_name = prompt_required("First name")
+    last_name = prompt_required("Last name")
+    other_names = prompt_optional("Other names")
+    date_of_birth = prompt_required("Date of birth (YYYY-MM-DD)")
+    age = prompt_required_int("Age")
+    gender = prompt_choice("Gender", sorted(INMATE_GENDERS))
+    nationality = prompt_required("Nationality")
+    national_id = prompt_optional("National ID")
+    phone = prompt_optional("Phone")
+    address = prompt_optional("Address")
+    marital_status = prompt_choice("Marital status", sorted(INMATE_MARITAL_STATUSES))
+
+    print_section("Physical Profile")
+    height_cm = prompt_optional("Height in cm")
+    weight_kg = prompt_optional("Weight in kg")
+    eye_color = prompt_optional("Eye color")
+    hair_color = prompt_optional("Hair color")
+    distinguishing_marks = prompt_optional("Distinguishing marks")
+    religion = prompt_optional("Religion")
+    occupation = prompt_optional("Occupation")
+    education_level = prompt_optional("Education level")
+
+    print_section("Next of Kin")
+    next_of_kin_name = prompt_required("Next of kin name")
+    next_of_kin_relation = prompt_choice("Next of kin relation", sorted(INMATE_NEXT_OF_KIN_RELATIONS))
+    next_of_kin_contact = prompt_optional("Next of kin contact")
+    next_of_kin_address = prompt_optional("Next of kin address")
+
+    print_section("Offense and Court")
+    offense = prompt_required("Offense")
+    offense_description = prompt_optional("Offense description")
+    arrest_date = prompt_required("Arrest date (YYYY-MM-DD)")
+    arresting_officer = prompt_required("Arresting officer")
+    arresting_agency = prompt_required("Arresting agency")
+    court = prompt_required("Court")
+    judge = prompt_optional("Judge")
+    sentence_type = prompt_choice("Sentence type", sorted(INMATE_SENTENCE_TYPES))
+    sentence_duration = prompt_optional("Sentence duration")
+    expected_release_date = prompt_optional("Expected release date (YYYY-MM-DD)")
+
+    print_section("Admission")
+    status = prompt_choice("Status", sorted(INMATE_STATUSES))
+    admission_date = prompt_required("Admission date (YYYY-MM-DD)")
+    admission_time = prompt_required("Admission time (HH:MM)")
+    admission_officer_id = prompt_required_int("Admission officer user ID")
+
+    payload = clean_payload({
+        "inmate_id": inmate_id,
+        "warrant_id": warrant_id,
+        "first_name": first_name,
+        "last_name": last_name,
+        "other_names": other_names,
+        "date_of_birth": date_of_birth,
+        "age": age,
+        "gender": gender,
+        "nationality": nationality,
+        "national_id": national_id,
+        "phone": phone,
+        "address": address,
+        "marital_status": marital_status,
+        "photo": photo,
+        "fingerprint_id": fingerprint_id,
+        "height_cm": height_cm,
+        "weight_kg": weight_kg,
+        "eye_color": eye_color,
+        "hair_color": hair_color,
+        "distinguishing_marks": distinguishing_marks,
+        "religion": religion,
+        "occupation": occupation,
+        "education_level": education_level,
+        "next_of_kin_name": next_of_kin_name,
+        "next_of_kin_relation": next_of_kin_relation,
+        "next_of_kin_contact": next_of_kin_contact,
+        "next_of_kin_address": next_of_kin_address,
+        "case_number": case_number,
+        "offense": offense,
+        "offense_description": offense_description,
+        "arrest_date": arrest_date,
+        "arresting_officer": arresting_officer,
+        "arresting_agency": arresting_agency,
+        "court": court,
+        "judge": judge,
+        "sentence_type": sentence_type,
+        "sentence_duration": sentence_duration,
+        "expected_release_date": expected_release_date,
+        "status": status,
+        "admission_date": admission_date,
+        "admission_time": admission_time,
+        "admission_officer_id": admission_officer_id,
+    })
+
+    response = client.post(
+        "/api/v1/inmates",
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 201:
+        print_api_error("Admission failed", body)
+        return
+
+    inmate = body.get("inmate", {})
+    print(f"{Fore.GREEN}Inmate admitted:{Style.RESET_ALL} {inmate.get('inmate_id')} - {inmate.get('first_name')} {inmate.get('last_name')}")
+
+
+def show_all_inmates(client, access_token: str) -> None:
+    query = view_all_inmates_filter()
+    response = client.get(
+        "/api/v1/inmates",
+        query_string=query,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Failed to load inmates", body)
+        return
+    print_selected_inmate_filter(query)
+    print_inmate_table(body)
+
+
+def search_inmates(client, access_token: str) -> None:
+    query = search_inmate_filters()
+    response = client.get(
+        "/api/v1/inmates/search",
+        query_string=query,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Search failed", body)
+        return
+    print_selected_inmate_filter(query)
+    print_inmate_table(body)
+
+
+def show_inmate_profile(client, access_token: str) -> None:
+    endpoint = prompt_inmate_lookup_endpoint()
+    response = client.get(
+        endpoint,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Failed to load inmate profile", body)
+        return
+    inmate = body.get("inmate")
+    if not isinstance(inmate, dict):
+        print(f"{Fore.RED}Failed to load inmate profile:{Style.RESET_ALL} invalid response.")
+        return
+    print_inmate_details(inmate)
+
+
+def update_inmate_record(client, access_token: str) -> None:
+    inmate_db_id = prompt_required_int("Inmate database ID")
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Edit inmate records{Style.RESET_ALL}")
+    print(f"{Fore.WHITE}Leave a field blank to keep the current value.{Style.RESET_ALL}")
+
+    updates = clean_payload({
+        "inmate_id": prompt_optional("Inmate ID"),
+        "warrant_id": prompt_optional_int("Arrest warrant ID"),
+        "first_name": prompt_optional("First name"),
+        "last_name": prompt_optional("Last name"),
+        "other_names": prompt_optional("Other names"),
+        "date_of_birth": prompt_optional("Date of birth (YYYY-MM-DD)"),
+        "age": prompt_optional_int("Age"),
+        "gender": prompt_optional_choice("Gender", sorted(INMATE_GENDERS)),
+        "nationality": prompt_optional("Nationality"),
+        "national_id": prompt_optional("National ID"),
+        "phone": prompt_optional("Phone"),
+        "address": prompt_optional("Address"),
+        "marital_status": prompt_optional_choice("Marital status", sorted(INMATE_MARITAL_STATUSES)),
+        "photo": prompt_optional("Photo path"),
+        "fingerprint_id": prompt_optional("Fingerprint ID"),
+        "height_cm": prompt_optional("Height in cm"),
+        "weight_kg": prompt_optional("Weight in kg"),
+        "eye_color": prompt_optional("Eye color"),
+        "hair_color": prompt_optional("Hair color"),
+        "distinguishing_marks": prompt_optional("Distinguishing marks"),
+        "religion": prompt_optional("Religion"),
+        "occupation": prompt_optional("Occupation"),
+        "education_level": prompt_optional("Education level"),
+        "next_of_kin_name": prompt_optional("Next of kin name"),
+        "next_of_kin_relation": prompt_optional_choice("Next of kin relation", sorted(INMATE_NEXT_OF_KIN_RELATIONS)),
+        "next_of_kin_contact": prompt_optional("Next of kin contact"),
+        "next_of_kin_address": prompt_optional("Next of kin address"),
+        "case_number": prompt_optional("Case number"),
+        "offense": prompt_optional("Offense"),
+        "offense_description": prompt_optional("Offense description"),
+        "arrest_date": prompt_optional("Arrest date (YYYY-MM-DD)"),
+        "arresting_officer": prompt_optional("Arresting officer"),
+        "arresting_agency": prompt_optional("Arresting agency"),
+        "court": prompt_optional("Court"),
+        "judge": prompt_optional("Judge"),
+        "sentence_type": prompt_optional_choice("Sentence type", sorted(INMATE_SENTENCE_TYPES)),
+        "sentence_duration": prompt_optional("Sentence duration"),
+        "expected_release_date": prompt_optional("Expected release date (YYYY-MM-DD)"),
+        "status": prompt_optional_choice("Status", sorted(INMATE_STATUSES)),
+        "admission_date": prompt_optional("Admission date (YYYY-MM-DD)"),
+        "admission_time": prompt_optional("Admission time (HH:MM)"),
+        "admission_officer_id": prompt_optional_int("Admission officer user ID"),
+    })
+
+    if not updates:
+        print(f"{Fore.YELLOW}No updates entered.{Style.RESET_ALL}")
+        return
+
+    response = client.patch(
+        f"/api/v1/inmates/{inmate_db_id}",
+        json=updates,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Update failed", body)
+        return
+
+    print(f"{Fore.GREEN}Inmate updated successfully.{Style.RESET_ALL}")
+    inmate = body.get("inmate")
+    if isinstance(inmate, dict):
+        print_inmate_details(inmate)
+
+
+def set_inmate_status(client, access_token: str) -> None:
+    inmate_db_id = prompt_required_int("Inmate database ID")
+    status = prompt_choice("Status", sorted(INMATE_STATUSES))
+    response = client.patch(
+        f"/api/v1/inmates/{inmate_db_id}/status",
+        json={"status": status},
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Status update failed", body)
+        return
+    inmate = body.get("inmate", {})
+    print(f"{Fore.GREEN}Inmate status updated:{Style.RESET_ALL} {inmate.get('inmate_id')} -> {inmate.get('status')}")
+
+
+def approve_inmate_transfer(client, access_token: str) -> None:
+    inmate_db_id = prompt_required_int("Inmate database ID")
+    confirm = input(f"{Fore.RED}Type TRANSFER to approve inmate transfer:{Style.RESET_ALL} ").strip()
+    if confirm != "TRANSFER":
+        print(f"{Fore.YELLOW}Transfer approval cancelled.{Style.RESET_ALL}")
+        return
+
+    response = client.patch(
+        f"/api/v1/inmates/{inmate_db_id}/approve-transfer",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Transfer approval failed", body)
+        return
+    inmate = body.get("inmate", {})
+    print(f"{Fore.GREEN}Transfer approved:{Style.RESET_ALL} {inmate.get('inmate_id')} -> {inmate.get('status')}")
+
+
+def approve_inmate_release(client, access_token: str) -> None:
+    inmate_db_id = prompt_required_int("Inmate database ID")
+    confirm = input(f"{Fore.RED}Type RELEASE to approve inmate release:{Style.RESET_ALL} ").strip()
+    if confirm != "RELEASE":
+        print(f"{Fore.YELLOW}Release approval cancelled.{Style.RESET_ALL}")
+        return
+
+    response = client.patch(
+        f"/api/v1/inmates/{inmate_db_id}/approve-release",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Release approval failed", body)
+        return
+    inmate = body.get("inmate", {})
+    print(f"{Fore.GREEN}Release approved:{Style.RESET_ALL} {inmate.get('inmate_id')} -> {inmate.get('status')}")
+
+
+def delete_inmate_record(client, access_token: str) -> None:
+    inmate_db_id = prompt_required_int("Inmate database ID")
+    confirm = input(f"{Fore.RED}Type DELETE to confirm inmate deletion:{Style.RESET_ALL} ").strip()
+    if confirm != "DELETE":
+        print(f"{Fore.YELLOW}Delete cancelled.{Style.RESET_ALL}")
+        return
+
+    response = client.delete(
+        f"/api/v1/inmates/{inmate_db_id}",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Delete failed", body)
+        return
+    inmate = body.get("inmate", {})
+    print(f"{Fore.GREEN}Inmate deleted:{Style.RESET_ALL} {inmate.get('inmate_id')} - {inmate.get('first_name')} {inmate.get('last_name')}")
+
+
+def prompt_inmate_lookup_endpoint() -> str:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Find Inmate By{Style.RESET_ALL}")
+    print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Database ID")
+    print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Inmate ID")
+    while True:
+        choice = input(f"{Fore.CYAN}Select lookup option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            return f"/api/v1/inmates/{prompt_required_int('Inmate database ID')}"
+        if choice == "2":
+            return f"/api/v1/inmates/inmate-id/{prompt_required('Inmate ID')}"
+        print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def view_all_inmates_filter() -> dict[str, object]:
+    return _select_filter_option(
+        "View all inmates",
+        [
+            ("female", {"gender": "female"}),
+            ("male", {"gender": "male"}),
+        ],
+    )
+
+
+def print_selected_inmate_filter(query: dict[str, object]) -> None:
+    if not query:
+        print(f"{Fore.GREEN}Showing all inmates.{Style.RESET_ALL}")
+        return
+    labels = []
+    for field, value in query.items():
+        label = "Status" if field == "status" else "Sentence Type" if field == "sentence_type" else "Gender"
+        labels.append(f"{label}: {value}")
+    print(f"{Fore.GREEN}Showing inmates by {Style.RESET_ALL}{', '.join(labels)}")
+
+
+def search_inmate_filters() -> dict[str, object]:
+    query: dict[str, object] = {}
+
+    gender_filter = _select_filter_option(
+        "Search inmates",
+        [
+            ("female", {"gender": "female"}),
+            ("male", {"gender": "male"}),
+        ],
+    )
+    if not gender_filter:
+        return query
+    query.update(gender_filter)
+
+    second_filter = _select_filter_option(
+        "Filter By",
+        [
+            ("active", {"status": "active"}),
+            ("deceased", {"status": "deceased"}),
+            ("released", {"status": "released"}),
+            ("transferred", {"status": "transferred"}),
+            ("convicted", {"sentence_type": "convicted"}),
+            ("death", {"sentence_type": "death"}),
+            ("life", {"sentence_type": "life"}),
+            ("remand", {"sentence_type": "remand"}),
+        ],
+    )
+    query.update(second_filter)
+    return query
+
+
+def _select_filter_option(title: str, filter_options: list[tuple[str, dict[str, str]]]) -> dict[str, str]:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}{title}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}0.{Style.RESET_ALL} Skip")
+        for index, (label, _) in enumerate(filter_options, start=1):
+            print(f"{Fore.YELLOW}{index}.{Style.RESET_ALL} {label}")
+
+        choice = input(f"{Fore.CYAN}Select filter:{Style.RESET_ALL} ").strip()
+        if choice in {"", "0"}:
+            return {}
+        if choice.isdigit():
+            selected_index = int(choice) - 1
+            if 0 <= selected_index < len(filter_options):
+                return dict(filter_options[selected_index][1])
+        print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def optional_inmate_filters() -> dict[str, object]:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Optional Filters{Style.RESET_ALL}")
+    filters = clean_payload({
+        "gender": prompt_optional_choice("Gender", sorted(INMATE_GENDERS)),
+        "nationality": prompt_optional("Nationality"),
+        "admission_date": prompt_optional("Admission date (YYYY-MM-DD)"),
+        "arrest_date": prompt_optional("Arrest date (YYYY-MM-DD)"),
+        "status": prompt_optional_choice("Status", sorted(INMATE_STATUSES)),
+        "sentence_type": prompt_optional_choice("Sentence type", sorted(INMATE_SENTENCE_TYPES)),
+        "limit": prompt_optional_int("Limit"),
+        "offset": prompt_optional_int("Offset"),
+    })
+    return filters
+
+
+def print_inmate_table(body: dict) -> None:
+    inmates = body.get("inmates")
+    if not isinstance(inmates, list):
+        print(f"{Fore.RED}Failed to load inmates:{Style.RESET_ALL} invalid response.")
+        return
+    if not inmates:
+        print(f"{Fore.YELLOW}No inmates found.{Style.RESET_ALL}")
+        return
+
+    rows = []
+    for inmate in inmates:
+        if not isinstance(inmate, dict):
+            continue
+        rows.append([
+            inmate.get("id"),
+            inmate.get("inmate_id") or "",
+            f"{inmate.get('first_name') or ''} {inmate.get('last_name') or ''}".strip(),
+            inmate.get("case_number") or "",
+            inmate.get("offense") or "",
+            inmate.get("status") or "",
+            inmate.get("sentence_type") or "",
+            inmate.get("admission_date") or "",
+        ])
+
+    print(f"\n{Fore.GREEN}Inmates ({body.get('total', len(rows))}){Style.RESET_ALL}")
+    print(tabulate(
+        rows,
+        headers=["ID", "Inmate ID", "Name", "Case Number", "Offense", "Status", "Sentence Type", "Admission Date"],
+        tablefmt="grid",
+    ))
+
+
+def print_inmate_details(inmate: dict) -> None:
+    rows = [
+        ["Database ID", inmate.get("id")],
+        ["Inmate ID", inmate.get("inmate_id")],
+        ["Warrant ID", inmate.get("warrant_id")],
+        ["Name", f"{inmate.get('first_name') or ''} {inmate.get('last_name') or ''}".strip()],
+        ["Other Names", inmate.get("other_names")],
+        ["Date of Birth", inmate.get("date_of_birth")],
+        ["Age", inmate.get("age")],
+        ["Gender", inmate.get("gender")],
+        ["Nationality", inmate.get("nationality")],
+        ["National ID", inmate.get("national_id")],
+        ["Phone", inmate.get("phone")],
+        ["Marital Status", inmate.get("marital_status")],
+        ["Fingerprint ID", inmate.get("fingerprint_id")],
+        ["Height CM", inmate.get("height_cm")],
+        ["Weight KG", inmate.get("weight_kg")],
+        ["Next of Kin", inmate.get("next_of_kin_name")],
+        ["Next of Kin Relation", inmate.get("next_of_kin_relation")],
+        ["Next of Kin Contact", inmate.get("next_of_kin_contact")],
+        ["Case Number", inmate.get("case_number")],
+        ["Offense", inmate.get("offense")],
+        ["Arrest Date", inmate.get("arrest_date")],
+        ["Arresting Officer", inmate.get("arresting_officer")],
+        ["Arresting Agency", inmate.get("arresting_agency")],
+        ["Court", inmate.get("court")],
+        ["Judge", inmate.get("judge")],
+        ["Sentence Type", inmate.get("sentence_type")],
+        ["Sentence Duration", inmate.get("sentence_duration")],
+        ["Expected Release Date", inmate.get("expected_release_date")],
+        ["Status", inmate.get("status")],
+        ["Admission Date", inmate.get("admission_date")],
+        ["Admission Time", inmate.get("admission_time")],
+        ["Admission Officer ID", inmate.get("admission_officer_id")],
+        ["Created At", inmate.get("created_at")],
+        ["Updated At", inmate.get("updated_at")],
+    ]
+    print(tabulate(rows, headers=["Field", "Value"], tablefmt="grid"))
+
+
 def prompt_staff_lookup() -> dict[str, str]:
     print(f"\n{Fore.CYAN}{Style.BRIGHT}Find Staff By{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Staff ID")
@@ -564,9 +1424,29 @@ def prompt_required(label: str) -> str:
         print(f"{Fore.RED}{label} is required.{Style.RESET_ALL}")
 
 
+def prompt_required_int(label: str) -> int:
+    while True:
+        value = prompt_required(label)
+        try:
+            return int(value)
+        except ValueError:
+            print(f"{Fore.RED}{label} must be an integer.{Style.RESET_ALL}")
+
+
 def prompt_optional(label: str) -> str | None:
     value = input(f"{Fore.CYAN}{label} (optional):{Style.RESET_ALL} ").strip()
     return value or None
+
+
+def prompt_optional_int(label: str) -> int | None:
+    value = prompt_optional(label)
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        print(f"{Fore.RED}{label} must be an integer. Value skipped.{Style.RESET_ALL}")
+        return None
 
 
 def prompt_choice(label: str, options: list[str]) -> str:
@@ -576,6 +1456,25 @@ def prompt_choice(label: str, options: list[str]) -> str:
         for index, option in enumerate(options, start=1):
             print(f"  {Fore.YELLOW}{index}.{Style.RESET_ALL} {option}")
         choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip().lower()
+        if choice.isdigit():
+            selected_index = int(choice) - 1
+            if 0 <= selected_index < len(options):
+                return options[selected_index].lower()
+        if choice in normalized_options:
+            return normalized_options[choice].lower()
+        print(f"{Fore.RED}Invalid selection.{Style.RESET_ALL}")
+
+
+def prompt_optional_choice(label: str, options: list[str]) -> str | None:
+    normalized_options = {option.lower(): option for option in options}
+    while True:
+        print(f"{Fore.CYAN}{label} (optional):{Style.RESET_ALL}")
+        print(f"  {Fore.YELLOW}0.{Style.RESET_ALL} Skip")
+        for index, option in enumerate(options, start=1):
+            print(f"  {Fore.YELLOW}{index}.{Style.RESET_ALL} {option}")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip().lower()
+        if choice in {"", "0"}:
+            return None
         if choice.isdigit():
             selected_index = int(choice) - 1
             if 0 <= selected_index < len(options):
@@ -596,6 +1495,21 @@ def prompt_password() -> str:
             print(f"{Fore.RED}Password is required.{Style.RESET_ALL}")
             continue
         return password
+
+
+def clean_payload(payload: dict[str, object]) -> dict[str, object]:
+    return {field: value for field, value in payload.items() if value not in {None, ""}}
+
+
+def print_api_error(prefix: str, body: dict) -> None:
+    print(f"{Fore.RED}{prefix}:{Style.RESET_ALL} {body.get('error', 'Unknown error')}")
+    errors = body.get("errors")
+    if isinstance(errors, dict):
+        for field, message in errors.items():
+            print(f"{Fore.YELLOW}{field}:{Style.RESET_ALL} {message}")
+    missing_permissions = body.get("missing_permissions")
+    if isinstance(missing_permissions, list):
+        print(f"{Fore.YELLOW}Missing permissions:{Style.RESET_ALL} {', '.join(missing_permissions)}")
 
 
 if __name__ == "__main__":

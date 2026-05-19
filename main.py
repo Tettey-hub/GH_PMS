@@ -14,7 +14,9 @@ from src.middlewares.maintenance_middleware import register_maintenance_middlewa
 from src.middlewares.rate_limit_middleware import register_rate_limit_middleware
 from src.middlewares.request_validation_middleware import register_request_validation_middleware
 from src.middlewares.security_headers_middleware import register_security_headers_middleware
+from src.routes.arrest_warrant_routes import arrest_warrant_bp
 from src.routes.auth_routes import auth_bp
+from src.routes.inmate_routes import inmate_bp
 
 
 def create_app() -> Flask:
@@ -46,6 +48,8 @@ def create_app() -> Flask:
     register_rate_limit_middleware(app)
     
     app.register_blueprint(auth_bp, url_prefix=f"{settings.api_prefix}/auth")
+    app.register_blueprint(arrest_warrant_bp, url_prefix=f"{settings.api_prefix}/arrest-warrants")
+    app.register_blueprint(inmate_bp, url_prefix=f"{settings.api_prefix}/inmates")
 
     @app.get("/")
     def root():

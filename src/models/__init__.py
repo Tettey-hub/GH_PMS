@@ -1,3 +1,32 @@
 from src.models.user import USER_ROLES, USER_SHIFTS, USER_STATUSES, User
+from src.models.arrest_warrant import (
+    ARREST_WARRANT_GENDERS,
+    ARREST_WARRANT_SENTENCE_TYPES,
+    ARREST_WARRANT_STATUSES,
+    ArrestWarrant,
+)
+from src.models.inmate import (
+    INMATE_GENDERS,
+    INMATE_MARITAL_STATUSES,
+    INMATE_NEXT_OF_KIN_RELATIONS,
+    INMATE_SENTENCE_TYPES,
+    INMATE_STATUSES,
+    Inmate,
+)
 
-__all__ = ["USER_ROLES", "USER_SHIFTS", "USER_STATUSES", "User"]
+__all__ = [
+    "USER_ROLES",
+    "USER_SHIFTS",
+    "USER_STATUSES",
+    "User",
+    "ARREST_WARRANT_GENDERS",
+    "ARREST_WARRANT_SENTENCE_TYPES",
+    "ARREST_WARRANT_STATUSES",
+    "ArrestWarrant",
+    "INMATE_GENDERS",
+    "INMATE_MARITAL_STATUSES",
+    "INMATE_NEXT_OF_KIN_RELATIONS",
+    "INMATE_SENTENCE_TYPES",
+    "INMATE_STATUSES",
+    "Inmate",
+]

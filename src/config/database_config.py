@@ -56,6 +56,7 @@ class DatabaseConfig:
             "autocommit": self.autocommit,
             "connection_timeout": self.connection_timeout,
             "get_warnings": False,
+            "ssl_disabled": settings.mysql_ssl_disabled,
         }
 
 
