@@ -22,6 +22,9 @@ PERMISSIONS_SCHEMA_FILE = SCHEMA_DIR / "permissions.sql"
 ARREST_WARRANTS_SCHEMA_FILE = SCHEMA_DIR / "arrest_warrants.sql"
 INMATES_SCHEMA_FILE = SCHEMA_DIR / "inmates.sql"
 MEDICAL_SCHEMA_FILE = SCHEMA_DIR / "medical.sql"
+VISITORS_SCHEMA_FILE = SCHEMA_DIR / "visitors.sql"
+EXTERNAL_INTEGRATIONS_SCHEMA_FILE = SCHEMA_DIR / "external_integrations.sql"
+REHABILITATION_SCHEMA_FILE = SCHEMA_DIR / "rehabilitation.sql"
 
 
 TARGET_USER_COLUMNS = {
@@ -191,6 +194,9 @@ def create_tables() -> None:
     arrest_warrants_sql = _read_schema_sql(ARREST_WARRANTS_SCHEMA_FILE)
     inmates_sql = _read_schema_sql(INMATES_SCHEMA_FILE)
     medical_sql = _read_schema_sql(MEDICAL_SCHEMA_FILE)
+    visitors_sql = _read_schema_sql(VISITORS_SCHEMA_FILE)
+    external_integrations_sql = _read_schema_sql(EXTERNAL_INTEGRATIONS_SCHEMA_FILE)
+    rehabilitation_sql = _read_schema_sql(REHABILITATION_SCHEMA_FILE)
 
     with db_connection() as connection:
         cursor = connection.cursor()
@@ -204,6 +210,9 @@ def create_tables() -> None:
         _ensure_inmates_table(cursor, inmates_sql)
         _ensure_inmate_workflow_tables(cursor, inmates_sql)
         _ensure_medical_tables(cursor, medical_sql)
+        _ensure_visitor_tables(cursor, visitors_sql)
+        _ensure_external_integration_tables(cursor, external_integrations_sql)
+        _ensure_rehabilitation_tables(cursor, rehabilitation_sql)
         connection.commit()
         cursor.close()
 
@@ -370,6 +379,32 @@ def _ensure_medical_tables(cursor, medical_sql: str) -> None:
     if not _table_exists(cursor, "users"):
         raise RuntimeError("Cannot create medical tables because users table does not exist.")
     _execute_schema_statements(cursor, medical_sql)
+
+
+def _ensure_visitor_tables(cursor, visitors_sql: str) -> None:
+    if not _table_exists(cursor, "inmates"):
+        raise RuntimeError("Cannot create visitor tables because inmates table does not exist.")
+    if not _table_exists(cursor, "users"):
+        raise RuntimeError("Cannot create visitor tables because users table does not exist.")
+    _execute_schema_statements(cursor, visitors_sql)
+
+
+def _ensure_external_integration_tables(cursor, external_integrations_sql: str) -> None:
+    if not _table_exists(cursor, "inmates"):
+        raise RuntimeError("Cannot create external integration tables because inmates table does not exist.")
+    if not _table_exists(cursor, "users"):
+        raise RuntimeError("Cannot create external integration tables because users table does not exist.")
+    if not _table_exists(cursor, "visitors"):
+        raise RuntimeError("Cannot create external integration tables because visitors table does not exist.")
+    _execute_schema_statements(cursor, external_integrations_sql)
+
+
+def _ensure_rehabilitation_tables(cursor, rehabilitation_sql: str) -> None:
+    if not _table_exists(cursor, "inmates"):
+        raise RuntimeError("Cannot create rehabilitation tables because inmates table does not exist.")
+    if not _table_exists(cursor, "users"):
+        raise RuntimeError("Cannot create rehabilitation tables because users table does not exist.")
+    _execute_schema_statements(cursor, rehabilitation_sql)
 
 
 def _ensure_inmate_workflow_tables(cursor, inmates_sql: str) -> None:

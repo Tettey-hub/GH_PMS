@@ -18,6 +18,28 @@ from src.models.arrest_warrant import (
     ARREST_WARRANT_SENTENCE_TYPES,
     ARREST_WARRANT_STATUSES,
 )
+from src.models.external_integration import (
+    API_STATUSES,
+    AUTHENTICATION_TYPES,
+    BACKUP_STATUSES,
+    BACKUP_TYPES,
+    BIOMETRIC_ENROLLMENT_STATUSES,
+    BIOMETRIC_MATCH_STATUSES,
+    BIOMETRIC_TYPES,
+    BIOMETRIC_VERIFICATION_STATUSES,
+    CRIMINAL_RECORD_STATUSES,
+    DEMOGRAPHIC_SYNC_STATUSES,
+    HEARING_STATUSES,
+    INTEGRATION_SYNC_STATUSES,
+    NIA_VERIFICATION_STATUSES,
+    RATE_LIMIT_STATUSES,
+    RECIDIVISM_STATUSES,
+    RECOVERY_TEST_STATUSES,
+    SENTENCE_STATUSES,
+    SYNCHRONIZATION_TYPES,
+    WANTED_PERSON_STATUSES,
+    WARRANT_STATUSES,
+)
 from src.models.inmate import (
     INMATE_GENDERS,
     INMATE_MARITAL_STATUSES,
@@ -43,6 +65,25 @@ from src.models.medical import (
     SEVERITY_LEVELS,
     SUICIDE_RISK_LEVELS,
     TREATMENT_STATUSES,
+)
+from src.models.rehabilitation import (
+    BEHAVIOR_CATEGORIES,
+    CERTIFICATION_LEVELS,
+    CERTIFICATION_VALIDITY_STATUSES,
+    COUNSELING_SESSION_TYPES,
+    REHABILITATION_RISK_LEVELS,
+    RELIGIOUS_ACTIVITY_TYPES,
+    RELIGIOUS_ATTENDANCE_STATUSES,
+    VOCATIONAL_COMPLETION_STATUSES,
+    VOCATIONAL_PROGRAM_TYPES,
+    WORK_TYPES,
+)
+from src.models.visitor import (
+    VISIT_TYPES,
+    VISITOR_MONITORING_LEVELS,
+    VISITOR_RELATIONSHIPS,
+    VISITOR_SECURITY_SCREENING_STATUSES,
+    VISITOR_VIOLATION_SEVERITIES,
 )
 
 
@@ -86,25 +127,11 @@ def main() -> int:
         elif choice == "5":
             manage_medical_management(client, access_token)
         elif choice == "6":
-            show_coming_soon_menu("Visitor Management", [
-                "Approve/reject visitor requests",
-                "View visitor logs",
-                "Blacklist visitors",
-            ])
+            manage_visitor_management(client, access_token)
         elif choice == "7":
             show_housing_and_movement_menu()
         elif choice == "8":
-            show_coming_soon_menu("Rehabilitation Management", [
-                "Vocational training registration",
-                "Educational program tracking",
-                "Counseling sessions",
-                "Behavioral improvement tracking",
-                "Religious participation",
-                "Work assignments",
-                "Skill certification",
-                "Post-release follow-up",
-                "Rehabilitation reports",
-            ])
+            manage_rehabilitation_management(client, access_token)
         elif choice == "9":
             show_coming_soon_menu("Notifications", [
                 "Email alerts",
@@ -116,33 +143,17 @@ def main() -> int:
                 "Emergency notifications",
             ])
         elif choice == "10":
-            show_coming_soon_menu("External Integration Management", [
-                "Court system integration",
-                "National ID integration",
-                "Police database integration",
-                "Biometric integration",
-                "API management",
-                "Data synchronization",
-                "Cloud backup integration",
-            ])
-        elif choice == "11":
             show_coming_soon_menu("Reporting and Analytics", [
                 "Generate reports",
                 "Access analytics dashboard",
                 "Export reports",
                 "View prison statistics",
             ])
+        elif choice == "11":
+            manage_system_administration(client, access_token)
         elif choice == "12":
-            show_coming_soon_menu("System Administration", [
-                "Configure system settings",
-                "Manage roles",
-                "Access audit logs",
-                "Manage backups",
-                "Monitor system activities",
-            ])
-        elif choice == "13":
             access_token, refresh_token, current_user = logout(client, access_token, refresh_token, current_user)
-        elif choice == "14":
+        elif choice == "13":
             print(f"{Fore.CYAN}Goodbye.{Style.RESET_ALL}")
             return 0
         else:
@@ -167,11 +178,10 @@ def print_logged_in_menu(current_user: dict) -> None:
     print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Housing and Movement Management")
     print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Rehabilitation Management")
     print(f"{Fore.YELLOW}9.{Style.RESET_ALL} Notifications")
-    print(f"{Fore.YELLOW}10.{Style.RESET_ALL} External Integration Management")
-    print(f"{Fore.YELLOW}11.{Style.RESET_ALL} Reporting and Analytics")
-    print(f"{Fore.YELLOW}12.{Style.RESET_ALL} System Administration")
-    print(f"{Fore.YELLOW}13.{Style.RESET_ALL} Log Out")
-    print(f"{Fore.YELLOW}14.{Style.RESET_ALL} Exit")
+    print(f"{Fore.YELLOW}10.{Style.RESET_ALL} Reporting and Analytics")
+    print(f"{Fore.YELLOW}11.{Style.RESET_ALL} System Administration")
+    print(f"{Fore.YELLOW}12.{Style.RESET_ALL} Log Out")
+    print(f"{Fore.YELLOW}13.{Style.RESET_ALL} Exit")
 
 
 def show_coming_soon_menu(title: str, actions: list[str]) -> None:
@@ -627,6 +637,787 @@ def print_medical_history(history: object) -> None:
             print(value)
 
 
+def manage_visitor_management(client, access_token: str | None) -> None:
+    if not access_token:
+        print(f"{Fore.YELLOW}Login as an admin, visitor officer, or security officer before using Visitor Management.{Style.RESET_ALL}")
+        return
+
+    sections = [
+        ("Visitor Registration", manage_visitor_registration),
+        ("Visitor Verification", manage_visitor_verification),
+        ("Visit Request Processing", manage_visit_requests),
+        ("Visit Scheduling", manage_visit_scheduling),
+        ("Check-in and Check-out", manage_visitor_checkins),
+        ("Visitor Monitoring", manage_visitor_monitoring),
+        ("Visitor Reports", manage_visitor_reports),
+    ]
+
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Visitor Management{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Manages visitor registration, visit approvals, scheduling, monitoring, and security tracking.{Style.RESET_ALL}")
+        for index, (section_title, _) in enumerate(sections, start=1):
+            print(f"{Fore.YELLOW}{index}.{Style.RESET_ALL} {section_title}")
+        print(f"{Fore.YELLOW}{len(sections) + 1}.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == str(len(sections) + 1):
+            return
+        if choice.isdigit() and 1 <= int(choice) <= len(sections):
+            _, handler = sections[int(choice) - 1]
+            handler(client, access_token)
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_visitor_registration(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Visitor Registration{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Register visitor")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Update visitor profile")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Search visitors")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} View visitor history")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            register_visitor_record(client, access_token)
+        elif choice == "2":
+            update_visitor_record(client, access_token)
+        elif choice == "3":
+            search_visitor_records(client, access_token)
+        elif choice == "4":
+            view_visitor_history(client, access_token)
+        elif choice == "5":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_visitor_verification(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Visitor Verification{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Verify visitor identity")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Blacklist visitor")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} View visitor history")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            verify_visitor_identity_record(client, access_token)
+        elif choice == "2":
+            blacklist_visitor_record(client, access_token)
+        elif choice == "3":
+            view_visitor_history(client, access_token)
+        elif choice == "4":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_visit_requests(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Visit Request Processing{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Submit visit request")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Mark request under review")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Approve visit request")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Reject visit request")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Reschedule visit request")
+        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} View visitor history")
+        print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            submit_visit_request_record(client, access_token)
+        elif choice == "2":
+            patch_visit_request(client, access_token, "review", clean_payload({"review_notes": prompt_optional("Review notes")}))
+        elif choice == "3":
+            patch_visit_request(client, access_token, "approve", clean_payload({
+                "approved_date": prompt_optional("Approved date (YYYY-MM-DD)"),
+                "review_notes": prompt_optional("Review notes"),
+            }))
+        elif choice == "4":
+            patch_visit_request(client, access_token, "reject", {"review_notes": prompt_required("Rejection notes")})
+        elif choice == "5":
+            patch_visit_request(client, access_token, "reschedule", clean_payload({
+                "rescheduled_date": prompt_required("Rescheduled date (YYYY-MM-DD)"),
+                "review_notes": prompt_optional("Review notes"),
+            }))
+        elif choice == "6":
+            view_visitor_history(client, access_token)
+        elif choice == "7":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_visit_scheduling(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Visit Scheduling{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Create visit schedule")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View visitor history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            create_visit_schedule_record(client, access_token)
+        elif choice == "2":
+            view_visitor_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_visitor_checkins(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Check-in and Check-out{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Check in visitor")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Check out visitor")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} View visitor history")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            check_in_visitor_record(client, access_token)
+        elif choice == "2":
+            check_out_visitor_record(client, access_token)
+        elif choice == "3":
+            view_visitor_history(client, access_token)
+        elif choice == "4":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_visitor_monitoring(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Visitor Monitoring{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Record monitoring log")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Record visitor violation")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} View visitor history")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            record_visitor_monitoring(client, access_token)
+        elif choice == "2":
+            record_visitor_violation(client, access_token)
+        elif choice == "3":
+            view_visitor_history(client, access_token)
+        elif choice == "4":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_visitor_reports(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Visitor Reports{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Generate visitor reports")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Search visitors")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            view_visitor_reports(client, access_token)
+        elif choice == "2":
+            search_visitor_records(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def register_visitor_record(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Register Visitor{Style.RESET_ALL}")
+    payload = clean_payload({
+        "visitor_id": prompt_required("External visitor ID"),
+        "first_name": prompt_required("First name"),
+        "last_name": prompt_required("Last name"),
+        "other_names": prompt_optional("Other names"),
+        "gender": prompt_required("Gender"),
+        "date_of_birth": prompt_required("Date of birth (YYYY-MM-DD)"),
+        "nationality": prompt_required("Nationality"),
+        "national_id": prompt_required("National ID"),
+        "phone": prompt_required("Phone"),
+        "email": prompt_optional("Email"),
+        "address": prompt_required("Address"),
+        "relationship_to_inmate": prompt_choice("Relationship to inmate", sorted(VISITOR_RELATIONSHIPS)),
+        "occupation": prompt_optional("Occupation"),
+        "photo": prompt_optional("Photo path"),
+        "biometric_id": prompt_optional("Biometric ID"),
+    })
+    _post_visitor_record(client, access_token, "/api/v1/visitors", payload, "visitor", "Visitor registered")
+
+
+def update_visitor_record(client, access_token: str) -> None:
+    visitor_db_id = prompt_required_int("Visitor database ID")
+    print(f"{Fore.WHITE}Leave a field blank to keep the current value.{Style.RESET_ALL}")
+    payload = clean_payload({
+        "first_name": prompt_optional("First name"),
+        "last_name": prompt_optional("Last name"),
+        "other_names": prompt_optional("Other names"),
+        "gender": prompt_optional("Gender"),
+        "date_of_birth": prompt_optional("Date of birth (YYYY-MM-DD)"),
+        "nationality": prompt_optional("Nationality"),
+        "phone": prompt_optional("Phone"),
+        "email": prompt_optional("Email"),
+        "address": prompt_optional("Address"),
+        "relationship_to_inmate": prompt_optional_choice("Relationship to inmate", sorted(VISITOR_RELATIONSHIPS)),
+        "occupation": prompt_optional("Occupation"),
+        "photo": prompt_optional("Photo path"),
+        "biometric_id": prompt_optional("Biometric ID"),
+    })
+    if not payload:
+        print(f"{Fore.YELLOW}No visitor changes provided.{Style.RESET_ALL}")
+        return
+    response = client.patch(
+        f"/api/v1/visitors/{visitor_db_id}",
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Visitor update failed", body)
+        return
+    print(f"{Fore.GREEN}Visitor updated.{Style.RESET_ALL}")
+    print_record_details(body.get("visitor", {}))
+
+
+def verify_visitor_identity_record(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Verify Visitor Identity{Style.RESET_ALL}")
+    payload = {
+        "visitor_id": prompt_required_int("Visitor database ID"),
+        "national_id_verified": prompt_bool("National ID verified"),
+        "biometric_verified": prompt_bool("Biometric verified"),
+        "blacklist_checked": prompt_bool("Blacklist checked"),
+        "security_screening_status": prompt_exact_choice("Security screening status", sorted(VISITOR_SECURITY_SCREENING_STATUSES)),
+        "verification_date": prompt_required("Verification date (YYYY-MM-DD)"),
+        "verification_notes": prompt_optional("Verification notes"),
+    }
+    _post_visitor_record(client, access_token, "/api/v1/visitors/verifications", clean_payload(payload), "visitor_verification", "Visitor verification recorded")
+
+
+def blacklist_visitor_record(client, access_token: str) -> None:
+    visitor_db_id = prompt_required_int("Visitor database ID")
+    response = client.patch(
+        f"/api/v1/visitors/{visitor_db_id}/blacklist",
+        json={"blacklist_reason": prompt_required("Blacklist reason")},
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Visitor blacklist failed", body)
+        return
+    print(f"{Fore.GREEN}Visitor blacklisted.{Style.RESET_ALL}")
+    print_record_details(body.get("visitor", {}))
+
+
+def submit_visit_request_record(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Submit Visit Request{Style.RESET_ALL}")
+    payload = {
+        "visitor_id": prompt_required_int("Visitor database ID"),
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "requested_visit_date": prompt_required("Requested visit date (YYYY-MM-DD)"),
+        "requested_time_slot": prompt_required("Requested time slot"),
+        "purpose_of_visit": prompt_required("Purpose of visit"),
+        "visit_type": prompt_exact_choice("Visit type", sorted(VISIT_TYPES)),
+    }
+    _post_visitor_record(client, access_token, "/api/v1/visitors/requests", payload, "visitor_request", "Visit request submitted")
+
+
+def patch_visit_request(client, access_token: str, action: str, payload: dict[str, object]) -> None:
+    request_id = prompt_required_int("Visit request ID")
+    response = client.patch(
+        f"/api/v1/visitors/requests/{request_id}/{action}",
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Visit request workflow failed", body)
+        return
+    print(f"{Fore.GREEN}Visit request updated.{Style.RESET_ALL}")
+    print_record_details(body.get("visitor_request", {}))
+
+
+def create_visit_schedule_record(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Create Visit Schedule{Style.RESET_ALL}")
+    payload = {
+        "visitor_request_id": prompt_required_int("Visit request ID"),
+        "visit_date": prompt_required("Visit date (YYYY-MM-DD)"),
+        "start_time": prompt_required("Start time (HH:MM)"),
+        "end_time": prompt_required("End time (HH:MM)"),
+        "visit_duration_minutes": prompt_required_int("Visit duration minutes"),
+        "visit_room": prompt_required("Visit room"),
+        "daily_capacity_slot": prompt_required_int("Daily capacity slot"),
+    }
+    _post_visitor_record(client, access_token, "/api/v1/visitors/schedules", payload, "visitor_schedule", "Visit scheduled")
+
+
+def check_in_visitor_record(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Check In Visitor{Style.RESET_ALL}")
+    payload = clean_payload({
+        "visitor_schedule_id": prompt_required_int("Visitor schedule ID"),
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "arrival_time": prompt_required("Arrival time (YYYY-MM-DDTHH:MM:SS)"),
+        "security_clearance_status": prompt_exact_choice("Security clearance status", sorted(VISITOR_SECURITY_SCREENING_STATUSES)),
+        "belongings_checked": prompt_bool("Belongings checked"),
+        "checkin_notes": prompt_optional("Check-in notes"),
+    })
+    _post_visitor_record(client, access_token, "/api/v1/visitors/checkins", payload, "visitor_checkin", "Visitor checked in")
+
+
+def check_out_visitor_record(client, access_token: str) -> None:
+    checkin_id = prompt_required_int("Check-in ID")
+    payload = clean_payload({
+        "exit_time": prompt_required("Exit time (YYYY-MM-DDTHH:MM:SS)"),
+        "checkout_notes": prompt_optional("Checkout notes"),
+    })
+    response = client.patch(
+        f"/api/v1/visitors/checkins/{checkin_id}/checkout",
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Visitor checkout failed", body)
+        return
+    print(f"{Fore.GREEN}Visitor checked out.{Style.RESET_ALL}")
+    print_record_details(body.get("visitor_checkin", {}))
+
+
+def record_visitor_monitoring(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Record Monitoring Log{Style.RESET_ALL}")
+    payload = {
+        "visitor_id": prompt_required_int("Visitor database ID"),
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "suspicious_activity": prompt_required("Suspicious activity"),
+        "monitoring_level": prompt_exact_choice("Monitoring level", sorted(VISITOR_MONITORING_LEVELS)),
+        "officer_notes": prompt_required("Officer notes"),
+        "action_taken": prompt_required("Action taken"),
+        "monitoring_date": prompt_required("Monitoring date (YYYY-MM-DD)"),
+    }
+    _post_visitor_record(client, access_token, "/api/v1/visitors/monitoring", payload, "visitor_monitoring_log", "Visitor monitoring log recorded")
+
+
+def record_visitor_violation(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Record Visitor Violation{Style.RESET_ALL}")
+    payload = {
+        "visitor_id": prompt_required_int("Visitor database ID"),
+        "violation_type": prompt_required("Violation type"),
+        "violation_description": prompt_required("Violation description"),
+        "action_taken": prompt_required("Action taken"),
+        "violation_severity": prompt_exact_choice("Violation severity", sorted(VISITOR_VIOLATION_SEVERITIES)),
+        "violation_date": prompt_required("Violation date (YYYY-MM-DD)"),
+    }
+    _post_visitor_record(client, access_token, "/api/v1/visitors/violations", payload, "visitor_violation", "Visitor violation recorded")
+
+
+def view_visitor_history(client, access_token: str) -> None:
+    visitor_db_id = prompt_required_int("Visitor database ID")
+    response = client.get(
+        f"/api/v1/visitors/{visitor_db_id}/history",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Visitor history lookup failed", body)
+        return
+    print_visitor_history(body.get("visitor_history", {}))
+
+
+def search_visitor_records(client, access_token: str) -> None:
+    query = clean_payload({
+        "q": prompt_optional("Search text"),
+        "relationship_to_inmate": prompt_optional_choice("Relationship to inmate", sorted(VISITOR_RELATIONSHIPS)),
+        "verification_status": prompt_optional_exact_choice("Verification status", ["PENDING", "VERIFIED", "FAILED"]),
+        "blacklist_status": prompt_optional_bool("Blacklisted"),
+        "limit": prompt_optional_int("Limit"),
+        "offset": prompt_optional_int("Offset"),
+    })
+    response = client.get(
+        "/api/v1/visitors",
+        query_string=query,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Visitor search failed", body)
+        return
+    print_record_list("Visitors", body.get("visitors"))
+
+
+def view_visitor_reports(client, access_token: str) -> None:
+    response = client.get(
+        "/api/v1/visitors/reports",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Visitor reports failed", body)
+        return
+    print_visitor_history(body.get("visitor_reports", {}))
+
+
+def _post_visitor_record(client, access_token: str, endpoint: str, payload: dict[str, object], response_key: str, success_label: str) -> None:
+    response = client.post(
+        endpoint,
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 201:
+        print_api_error(f"{success_label} failed", body)
+        return
+    print(f"{Fore.GREEN}{success_label}.{Style.RESET_ALL}")
+    print_record_details(body.get(response_key, {}))
+
+
+def print_visitor_history(history: object) -> None:
+    if not isinstance(history, dict):
+        print(f"{Fore.RED}Invalid visitor response.{Style.RESET_ALL}")
+        return
+    for section, value in history.items():
+        print(f"\n{Fore.GREEN}{section.replace('_', ' ').title()}{Style.RESET_ALL}")
+        if isinstance(value, list):
+            if not value:
+                print(f"{Fore.YELLOW}No records found.{Style.RESET_ALL}")
+            else:
+                print(tabulate(value, headers="keys", tablefmt="grid"))
+        elif isinstance(value, dict):
+            print_record_details(value)
+        elif value is None:
+            print(f"{Fore.YELLOW}No record found.{Style.RESET_ALL}")
+        else:
+            print(value)
+
+
+def manage_rehabilitation_management(client, access_token: str | None) -> None:
+    if not access_token:
+        print(f"{Fore.YELLOW}Login as an admin, rehabilitation officer, counselor, or authorized prison officer before using Rehabilitation Management.{Style.RESET_ALL}")
+        return
+
+    sections = [
+        ("Vocational Training Registration", manage_vocational_training_registration),
+        ("Counseling Sessions", manage_counseling_sessions),
+        ("Behavioral Improvement Tracking", manage_behavioral_improvement_tracking),
+        ("Religious Participation", manage_religious_participation),
+        ("Work Assignments", manage_work_assignments),
+        ("Skill Certification", manage_skill_certification),
+        ("Post-Release Follow-up", manage_post_release_followup),
+        ("Rehabilitation Reports", manage_rehabilitation_reports),
+    ]
+
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Rehabilitation Management{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Manages inmate skill development, counseling, behavior tracking, work duties, certifications, and reintegration support.{Style.RESET_ALL}")
+        for index, (section_title, _) in enumerate(sections, start=1):
+            print(f"{Fore.YELLOW}{index}.{Style.RESET_ALL} {section_title}")
+        print(f"{Fore.YELLOW}{len(sections) + 1}.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == str(len(sections) + 1):
+            return
+        if choice.isdigit() and 1 <= int(choice) <= len(sections):
+            _, handler = sections[int(choice) - 1]
+            handler(client, access_token)
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_vocational_training_registration(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Vocational Training Registration{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Enroll inmate in vocational program")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate rehabilitation history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            enroll_vocational_training(client, access_token)
+        elif choice == "2":
+            view_inmate_rehabilitation_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_counseling_sessions(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Counseling Sessions{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Schedule counseling session")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate rehabilitation history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            schedule_rehabilitation_counseling(client, access_token)
+        elif choice == "2":
+            view_inmate_rehabilitation_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_behavioral_improvement_tracking(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Behavioral Improvement Tracking{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Record behavioral assessment")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate rehabilitation history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            record_rehabilitation_behavioral_assessment(client, access_token)
+        elif choice == "2":
+            view_inmate_rehabilitation_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_religious_participation(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Religious Participation{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Assign religious participation activity")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate rehabilitation history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            record_religious_participation(client, access_token)
+        elif choice == "2":
+            view_inmate_rehabilitation_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_work_assignments(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Work Assignments{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Assign work duties")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate rehabilitation history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            assign_rehabilitation_work_duties(client, access_token)
+        elif choice == "2":
+            view_inmate_rehabilitation_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_skill_certification(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Skill Certification{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Issue certification")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate rehabilitation history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            issue_rehabilitation_certification(client, access_token)
+        elif choice == "2":
+            view_inmate_rehabilitation_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_post_release_followup(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Post-Release Follow-up{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Track post-release follow-up")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate rehabilitation history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            track_rehabilitation_post_release_followup(client, access_token)
+        elif choice == "2":
+            view_inmate_rehabilitation_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_rehabilitation_reports(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Rehabilitation Reports{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Generate rehabilitation reports")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} View inmate rehabilitation history")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Back")
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            view_rehabilitation_reports(client, access_token)
+        elif choice == "2":
+            view_inmate_rehabilitation_history(client, access_token)
+        elif choice == "3":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def enroll_vocational_training(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Enroll Inmate In Vocational Program{Style.RESET_ALL}")
+    payload = {
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "program_name": prompt_exact_choice("Program name", sorted(VOCATIONAL_PROGRAM_TYPES)),
+        "skill_category": prompt_required("Skill category"),
+        "training_center": prompt_required("Training center"),
+        "instructor_name": prompt_required("Instructor name"),
+        "enrollment_date": prompt_required("Enrollment date (YYYY-MM-DD)"),
+        "completion_status": prompt_exact_choice("Completion status", sorted(VOCATIONAL_COMPLETION_STATUSES)),
+        "progress_percentage": prompt_required("Progress percentage"),
+        "assessment_score": prompt_optional("Assessment score"),
+        "certification_eligible": prompt_bool("Certification eligible"),
+    }
+    _post_rehabilitation_record(client, access_token, "/api/v1/rehabilitation/vocational-training", clean_payload(payload), "vocational_training", "Vocational training enrollment created")
+
+
+def schedule_rehabilitation_counseling(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Schedule Counseling Session{Style.RESET_ALL}")
+    payload = {
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "counselor_name": prompt_required("Counselor name"),
+        "session_type": prompt_exact_choice("Session type", sorted(COUNSELING_SESSION_TYPES)),
+        "session_date": prompt_required("Session date (YYYY-MM-DD)"),
+        "session_notes": prompt_required("Session notes"),
+        "behavioral_observation": prompt_required("Behavioral observation"),
+        "risk_level": prompt_exact_choice("Risk level", sorted(REHABILITATION_RISK_LEVELS)),
+        "follow_up_required": prompt_bool("Follow-up required"),
+    }
+    _post_rehabilitation_record(client, access_token, "/api/v1/rehabilitation/counseling-sessions", payload, "counseling_session", "Counseling session recorded")
+
+
+def record_rehabilitation_behavioral_assessment(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Record Behavioral Assessment{Style.RESET_ALL}")
+    payload = {
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "behavior_score": prompt_required("Behavior score"),
+        "behavior_category": prompt_exact_choice("Behavior category", sorted(BEHAVIOR_CATEGORIES)),
+        "observation_notes": prompt_required("Observation notes"),
+        "incident_count": prompt_required_int("Incident count"),
+        "improvement_level": prompt_required("Improvement level"),
+        "assessment_date": prompt_required("Assessment date (YYYY-MM-DD)"),
+    }
+    _post_rehabilitation_record(client, access_token, "/api/v1/rehabilitation/behavioral-assessments", payload, "behavioral_assessment", "Behavioral assessment recorded")
+
+
+def record_religious_participation(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Assign Religious Participation Activity{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "religion": prompt_required("Religion"),
+        "activity_type": prompt_exact_choice("Activity type", sorted(RELIGIOUS_ACTIVITY_TYPES)),
+        "participation_date": prompt_required("Participation date (YYYY-MM-DD)"),
+        "attendance_status": prompt_exact_choice("Attendance status", sorted(RELIGIOUS_ATTENDANCE_STATUSES)),
+        "religious_leader": prompt_required("Religious leader"),
+        "notes": prompt_optional("Notes"),
+    })
+    _post_rehabilitation_record(client, access_token, "/api/v1/rehabilitation/religious-participation", payload, "religious_participation", "Religious participation recorded")
+
+
+def assign_rehabilitation_work_duties(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Assign Work Duties{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "work_type": prompt_exact_choice("Work type", sorted(WORK_TYPES)),
+        "assignment_location": prompt_required("Assignment location"),
+        "supervisor_name": prompt_required("Supervisor name"),
+        "start_date": prompt_required("Start date (YYYY-MM-DD)"),
+        "end_date": prompt_optional("End date (YYYY-MM-DD)"),
+        "performance_rating": prompt_optional("Performance rating"),
+        "attendance_record": prompt_required("Attendance record"),
+    })
+    _post_rehabilitation_record(client, access_token, "/api/v1/rehabilitation/work-assignments", payload, "work_assignment", "Work assignment created")
+
+
+def issue_rehabilitation_certification(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Issue Skill Certification{Style.RESET_ALL}")
+    payload = {
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "certification_name": prompt_required("Certification name"),
+        "skill_area": prompt_required("Skill area"),
+        "issuing_authority": prompt_required("Issuing authority"),
+        "issue_date": prompt_required("Issue date (YYYY-MM-DD)"),
+        "certificate_number": prompt_required("Certificate number"),
+        "grade": prompt_exact_choice("Grade", sorted(CERTIFICATION_LEVELS)),
+        "validity_status": prompt_exact_choice("Validity status", sorted(CERTIFICATION_VALIDITY_STATUSES)),
+    }
+    _post_rehabilitation_record(client, access_token, "/api/v1/rehabilitation/skill-certifications", payload, "skill_certification", "Skill certification issued")
+
+
+def track_rehabilitation_post_release_followup(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Track Post-Release Follow-up{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "release_date": prompt_required("Release date (YYYY-MM-DD)"),
+        "follow_up_date": prompt_required("Follow-up date (YYYY-MM-DD)"),
+        "employment_status": prompt_required("Employment status"),
+        "housing_status": prompt_required("Housing status"),
+        "reintegration_score": prompt_required("Reintegration score"),
+        "recidivism_risk_level": prompt_exact_choice("Recidivism risk level", sorted(REHABILITATION_RISK_LEVELS)),
+        "notes": prompt_optional("Notes"),
+    })
+    _post_rehabilitation_record(client, access_token, "/api/v1/rehabilitation/post-release-followups", payload, "post_release_followup", "Post-release follow-up recorded")
+
+
+def view_inmate_rehabilitation_history(client, access_token: str) -> None:
+    inmate_id = prompt_required_int("Inmate database ID")
+    response = client.get(
+        f"/api/v1/rehabilitation/inmates/{inmate_id}/history",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Rehabilitation history lookup failed", body)
+        return
+    print_rehabilitation_history(body.get("rehabilitation_history", {}))
+
+
+def view_rehabilitation_reports(client, access_token: str) -> None:
+    response = client.get(
+        "/api/v1/rehabilitation/reports",
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 200:
+        print_api_error("Rehabilitation reports failed", body)
+        return
+    print_rehabilitation_history(body.get("rehabilitation_reports", {}))
+
+
+def _post_rehabilitation_record(client, access_token: str, endpoint: str, payload: dict[str, object], response_key: str, success_label: str) -> None:
+    response = client.post(
+        endpoint,
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 201:
+        print_api_error(f"{success_label} failed", body)
+        return
+    print(f"{Fore.GREEN}{success_label}.{Style.RESET_ALL}")
+    print_record_details(body.get(response_key, {}))
+
+
+def print_rehabilitation_history(history: object) -> None:
+    if not isinstance(history, dict):
+        print(f"{Fore.RED}Invalid rehabilitation response.{Style.RESET_ALL}")
+        return
+    for section, value in history.items():
+        print(f"\n{Fore.GREEN}{section.replace('_', ' ').title()}{Style.RESET_ALL}")
+        if isinstance(value, list):
+            if not value:
+                print(f"{Fore.YELLOW}No records found.{Style.RESET_ALL}")
+            else:
+                print(tabulate(value, headers="keys", tablefmt="grid"))
+        elif isinstance(value, dict):
+            print_record_details(value)
+        elif value is None:
+            print(f"{Fore.YELLOW}No record found.{Style.RESET_ALL}")
+        else:
+            print(value)
+
+
 def show_housing_and_movement_menu() -> None:
     sections = [
         ("Block Management", [
@@ -680,6 +1471,209 @@ def show_housing_and_movement_menu() -> None:
             show_coming_soon_menu(section_title, actions)
         else:
             print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_system_administration(client, access_token: str | None) -> None:
+    if not access_token:
+        print(f"{Fore.YELLOW}Login as an admin or supervisor before using System Administration.{Style.RESET_ALL}")
+        return
+
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}System Administration{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Configure system settings")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Manage roles")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Access audit logs")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Manage backups")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Monitor system activities")
+        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            manage_configure_system_settings(client, access_token)
+        elif choice == "2":
+            print(f"{Fore.YELLOW}Manage roles:{Style.RESET_ALL} Coming soon.")
+        elif choice == "3":
+            print(f"{Fore.YELLOW}Access audit logs:{Style.RESET_ALL} Coming soon.")
+        elif choice == "4":
+            print(f"{Fore.YELLOW}Manage backups:{Style.RESET_ALL} Coming soon.")
+        elif choice == "5":
+            print(f"{Fore.YELLOW}Monitor system activities:{Style.RESET_ALL} Coming soon.")
+        elif choice == "6":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def manage_configure_system_settings(client, access_token: str) -> None:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Configure system settings{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Court system integration")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} National ID integration")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Police database integration")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Biometric integration")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} API management")
+        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} Data synchronization")
+        print(f"{Fore.YELLOW}7.{Style.RESET_ALL} Cloud backup integration")
+        print(f"{Fore.YELLOW}8.{Style.RESET_ALL} Back")
+
+        choice = input(f"{Fore.CYAN}Select option:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            record_court_system_integration(client, access_token)
+        elif choice == "2":
+            record_national_id_integration(client, access_token)
+        elif choice == "3":
+            record_police_database_integration(client, access_token)
+        elif choice == "4":
+            record_biometric_integration(client, access_token)
+        elif choice == "5":
+            record_api_management_integration(client, access_token)
+        elif choice == "6":
+            record_data_synchronization(client, access_token)
+        elif choice == "7":
+            record_cloud_backup_integration(client, access_token)
+        elif choice == "8":
+            return
+        else:
+            print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def record_court_system_integration(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Court system integration{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "external_case_reference": prompt_required("External case reference"),
+        "court_name": prompt_required("Court name"),
+        "court_api_source": prompt_required("Court API source"),
+        "warrant_status": prompt_exact_choice("Warrant status", sorted(WARRANT_STATUSES)),
+        "hearing_date": prompt_optional("Hearing date/time (YYYY-MM-DDTHH:MM:SS)"),
+        "hearing_status": prompt_exact_choice("Hearing status", sorted(HEARING_STATUSES)),
+        "sentence_status": prompt_exact_choice("Sentence status", sorted(SENTENCE_STATUSES)),
+        "synchronization_status": prompt_exact_choice("Synchronization status", sorted(INTEGRATION_SYNC_STATUSES)),
+        "last_synced_at": prompt_optional("Last synced at (YYYY-MM-DDTHH:MM:SS)"),
+    })
+    _post_external_integration_record(client, access_token, "/api/v1/external-integrations/court", payload, "court_integration", "Court integration recorded")
+
+
+def record_national_id_integration(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}National ID integration{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "national_id": prompt_required("National ID"),
+        "verification_status": prompt_exact_choice("Verification status", sorted(NIA_VERIFICATION_STATUSES)),
+        "biometric_match_status": prompt_exact_choice("Biometric match status", sorted(BIOMETRIC_MATCH_STATUSES)),
+        "demographic_sync_status": prompt_exact_choice("Demographic sync status", sorted(DEMOGRAPHIC_SYNC_STATUSES)),
+        "nia_reference_number": prompt_optional("NIA reference number"),
+        "last_verified_at": prompt_optional("Last verified at (YYYY-MM-DDTHH:MM:SS)"),
+    })
+    _post_external_integration_record(client, access_token, "/api/v1/external-integrations/nia", payload, "nia_integration", "National ID integration recorded")
+
+
+def record_police_database_integration(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Police database integration{Style.RESET_ALL}")
+    payload = clean_payload({
+        "inmate_id": prompt_required_int("Inmate database ID"),
+        "police_reference_number": prompt_required("Police reference number"),
+        "criminal_record_status": prompt_exact_choice("Criminal record status", sorted(CRIMINAL_RECORD_STATUSES)),
+        "fingerprint_match_status": prompt_exact_choice("Fingerprint match status", sorted(BIOMETRIC_MATCH_STATUSES)),
+        "recidivism_status": prompt_exact_choice("Recidivism status", sorted(RECIDIVISM_STATUSES)),
+        "wanted_person_status": prompt_exact_choice("Wanted person status", sorted(WANTED_PERSON_STATUSES)),
+        "intelligence_notes": prompt_optional("Intelligence notes"),
+        "synchronization_status": prompt_exact_choice("Synchronization status", sorted(INTEGRATION_SYNC_STATUSES)),
+        "last_synced_at": prompt_optional("Last synced at (YYYY-MM-DDTHH:MM:SS)"),
+    })
+    _post_external_integration_record(client, access_token, "/api/v1/external-integrations/police", payload, "police_integration", "Police integration recorded")
+
+
+def record_biometric_integration(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Biometric integration{Style.RESET_ALL}")
+    subject_payload = prompt_biometric_subject()
+    payload = clean_payload({
+        **subject_payload,
+        "biometric_type": prompt_exact_choice("Biometric type", sorted(BIOMETRIC_TYPES)),
+        "biometric_reference_id": prompt_required("Biometric reference ID"),
+        "enrollment_status": prompt_exact_choice("Enrollment status", sorted(BIOMETRIC_ENROLLMENT_STATUSES)),
+        "verification_status": prompt_exact_choice("Verification status", sorted(BIOMETRIC_VERIFICATION_STATUSES)),
+        "captured_device": prompt_required("Captured device"),
+        "captured_at": prompt_required("Captured at (YYYY-MM-DDTHH:MM:SS)"),
+    })
+    _post_external_integration_record(client, access_token, "/api/v1/external-integrations/biometrics", payload, "biometric_integration", "Biometric integration recorded")
+
+
+def record_api_management_integration(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}API management{Style.RESET_ALL}")
+    payload = clean_payload({
+        "integration_name": prompt_required("Integration name"),
+        "api_provider": prompt_required("API provider"),
+        "authentication_type": prompt_exact_choice("Authentication type", sorted(AUTHENTICATION_TYPES)),
+        "endpoint_reference": prompt_required("Endpoint reference"),
+        "api_status": prompt_exact_choice("API status", sorted(API_STATUSES)),
+        "rate_limit_status": prompt_exact_choice("Rate limit status", sorted(RATE_LIMIT_STATUSES)),
+        "encryption_enabled": prompt_bool("Encryption enabled"),
+        "last_health_check": prompt_optional("Last health check (YYYY-MM-DDTHH:MM:SS)"),
+    })
+    _post_external_integration_record(client, access_token, "/api/v1/external-integrations/apis", payload, "api_integration", "API integration recorded")
+
+
+def record_data_synchronization(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Data synchronization{Style.RESET_ALL}")
+    payload = clean_payload({
+        "source_facility": prompt_required("Source facility"),
+        "target_server": prompt_required("Target server"),
+        "synchronization_type": prompt_exact_choice("Synchronization type", sorted(SYNCHRONIZATION_TYPES)),
+        "synchronization_status": prompt_exact_choice("Synchronization status", sorted(INTEGRATION_SYNC_STATUSES)),
+        "records_processed": prompt_required_int("Records processed"),
+        "records_failed": prompt_required_int("Records failed"),
+        "retry_count": prompt_required_int("Retry count"),
+        "last_attempt_at": prompt_required("Last attempt at (YYYY-MM-DDTHH:MM:SS)"),
+        "completed_at": prompt_optional("Completed at (YYYY-MM-DDTHH:MM:SS)"),
+        "error_message": prompt_optional("Error message"),
+    })
+    _post_external_integration_record(client, access_token, "/api/v1/external-integrations/synchronizations", payload, "synchronization_log", "Synchronization log recorded")
+
+
+def record_cloud_backup_integration(client, access_token: str) -> None:
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Cloud backup integration{Style.RESET_ALL}")
+    payload = clean_payload({
+        "backup_reference": prompt_required("Backup reference"),
+        "backup_type": prompt_exact_choice("Backup type", sorted(BACKUP_TYPES)),
+        "backup_status": prompt_exact_choice("Backup status", sorted(BACKUP_STATUSES)),
+        "storage_location": prompt_required("Storage location"),
+        "records_backed_up": prompt_required_int("Records backed up"),
+        "backup_started_at": prompt_required("Backup started at (YYYY-MM-DDTHH:MM:SS)"),
+        "backup_completed_at": prompt_optional("Backup completed at (YYYY-MM-DDTHH:MM:SS)"),
+        "recovery_test_status": prompt_exact_choice("Recovery test status", sorted(RECOVERY_TEST_STATUSES)),
+    })
+    _post_external_integration_record(client, access_token, "/api/v1/external-integrations/backups", payload, "cloud_backup_log", "Cloud backup log recorded")
+
+
+def prompt_biometric_subject() -> dict[str, int]:
+    while True:
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}Biometric Subject{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Inmate")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Visitor")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Staff")
+        choice = input(f"{Fore.CYAN}Select subject:{Style.RESET_ALL} ").strip()
+        if choice == "1":
+            return {"inmate_id": prompt_required_int("Inmate database ID")}
+        if choice == "2":
+            return {"visitor_id": prompt_required_int("Visitor database ID")}
+        if choice == "3":
+            return {"staff_id": prompt_required_int("Staff user ID")}
+        print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
+
+
+def _post_external_integration_record(client, access_token: str, endpoint: str, payload: dict[str, object], response_key: str, success_label: str) -> None:
+    response = client.post(
+        endpoint,
+        json=payload,
+        headers={"Host": "localhost", "Authorization": f"Bearer {access_token}"},
+    )
+    body = response.get_json(silent=True) or {}
+    if response.status_code != 201:
+        print_api_error(f"{success_label} failed", body)
+        return
+    print(f"{Fore.GREEN}{success_label}.{Style.RESET_ALL}")
+    print_record_details(body.get(response_key, {}))
 
 
 def login(client) -> tuple[str | None, str | None, dict | None]:
@@ -2294,6 +3288,18 @@ def prompt_bool(label: str) -> bool:
         if value in {"no", "n", "false", "0"}:
             return False
         print(f"{Fore.RED}{label} must be yes or no.{Style.RESET_ALL}")
+
+
+def prompt_optional_bool(label: str) -> bool | None:
+    while True:
+        value = input(f"{Fore.CYAN}{label} (optional yes/no):{Style.RESET_ALL} ").strip().lower()
+        if not value:
+            return None
+        if value in {"yes", "y", "true", "1"}:
+            return True
+        if value in {"no", "n", "false", "0"}:
+            return False
+        print(f"{Fore.RED}{label} must be yes or no, or blank to skip.{Style.RESET_ALL}")
 
 
 def prompt_password() -> str:

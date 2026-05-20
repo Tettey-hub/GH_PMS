@@ -16,8 +16,11 @@ from src.middlewares.request_validation_middleware import register_request_valid
 from src.middlewares.security_headers_middleware import register_security_headers_middleware
 from src.routes.arrest_warrant_routes import arrest_warrant_bp
 from src.routes.auth_routes import auth_bp
+from src.routes.external_integration_routes import external_integration_bp
 from src.routes.inmate_routes import inmate_bp
 from src.routes.medical_routes import medical_bp
+from src.routes.rehabilitation_routes import rehabilitation_bp
+from src.routes.visitor_routes import visitor_bp
 
 
 def create_app() -> Flask:
@@ -52,6 +55,9 @@ def create_app() -> Flask:
     app.register_blueprint(arrest_warrant_bp, url_prefix=f"{settings.api_prefix}/arrest-warrants")
     app.register_blueprint(inmate_bp, url_prefix=f"{settings.api_prefix}/inmates")
     app.register_blueprint(medical_bp, url_prefix=f"{settings.api_prefix}/medical")
+    app.register_blueprint(visitor_bp, url_prefix=f"{settings.api_prefix}/visitors")
+    app.register_blueprint(external_integration_bp, url_prefix=f"{settings.api_prefix}/external-integrations")
+    app.register_blueprint(rehabilitation_bp, url_prefix=f"{settings.api_prefix}/rehabilitation")
 
     @app.get("/")
     def root():
